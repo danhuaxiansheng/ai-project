@@ -1,0 +1,20 @@
+# 基础依赖
+wheel>=0.38.0
+setuptools>=65.5.1
+certifi>=2022.12.7
+numpy>=1.24.0
+jieba>=0.42.1
+tqdm>=4.65.0
+
+# NLP相关依赖
+transformers>=4.30.0
+tokenizers>=0.13.3
+
+# 数据处理相关
+numpy>=1.24.0
+
+# 深度学习模型
+bert-base-chinese>=0.1.0
+
+# 其他工具包
+tqdm>=4.65.0  # 用于显示进度条 
