@@ -21,6 +21,9 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.0",
+    "date-fns": "^3.6.0",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.473.0",
     "next": "14.2.16",
     "react": "^18",
@@ -30,6 +33,8 @@
   },
   "devDependencies": {
     "@shadcn/ui": "^0.0.4",
+    "@types/file-saver": "^2.0.7",
+    "@types/jszip": "^3.4.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

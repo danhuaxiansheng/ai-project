@@ -10,6 +10,7 @@ import hashlib
 import re
 import jieba
 import jieba.analyse
+from utils.file_storage import FileStorage
 
 # 配置日志
 logging.basicConfig(
@@ -29,11 +30,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 初始化文件存储
+file_storage = FileStorage()
+
 class WorldGenerationParams(BaseModel):
     seed: Optional[str] = None
     complexity: int
     focus_areas: List[str]
     additional_params: Optional[dict] = None
+    project_name: Optional[str] = None  # 添加项目名称参数
 
     @validator('complexity')
     def validate_complexity(cls, v):
@@ -170,6 +175,17 @@ async def generate_world(params: WorldGenerationParams):
             focus_areas=params.focus_areas,
             **(params.additional_params or {})
         )
+        
+        # 保存到文件系统
+        saved_files = file_storage.save_world_data(
+            world_data,
+            project_name=params.project_name
+        )
+        logger.info(f"Saved world data to files: {saved_files}")
+        
+        # 在响应中添加文件路径信息
+        world_data["files"] = saved_files
+        world_data["project"] = params.project_name
         
         logger.info("World generation successful")
         return world_data

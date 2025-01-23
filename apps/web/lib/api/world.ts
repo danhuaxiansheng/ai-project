@@ -18,12 +18,32 @@ export interface WorldGenerationParams {
 
 export interface WorldData {
   id: string;
+  seed: string;
   version: string;
   timestamp: string;
+  files?: Record<string, string>;
   data: {
-    geography: any;
-    civilization: any;
-    history: any[];
+    geography: {
+      terrain: string;
+      climate: string;
+      // ... 其他地理属性
+    };
+    civilization: {
+      technology_level: string;
+      social_structure: string;
+      major_industries: string[];
+      population_size: number;
+      development_level: number;
+      cultural_traits: {
+        values: string;
+        beliefs: string;
+        customs: string;
+      };
+    };
+    history: Array<{
+      year: number;
+      event: string;
+    }>;
   };
 }
 

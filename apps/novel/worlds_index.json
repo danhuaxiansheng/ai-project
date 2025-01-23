@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default_project": {
+      "created_at": "20250123_222144",
+      "worlds": [
+        {
+          "id": "world-2b4cffb3",
+          "created_at": "20250123_222144",
+          "seed": "2b4cffb3"
+        }
+      ]
+    }
+  }
+}

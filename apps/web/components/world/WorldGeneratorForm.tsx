@@ -26,13 +26,6 @@ const FOCUS_AREAS = [
   { value: "religion", label: "宗教", description: "信仰体系、宗教组织" },
 ];
 
-const SEED_EXAMPLES = [
-  "fantasy-2024",
-  "medieval-world",
-  "future-earth",
-  "magic-realm",
-];
-
 interface WorldGeneratorFormProps {
   onGenerated: (data: WorldData) => void;
 }
@@ -42,8 +35,13 @@ export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
   const [seed, setSeed] = useState("");
   const [prompt, setPrompt] = useState("");
   const [complexity, setComplexity] = useState(5);
-  const [focusAreas, setFocusAreas] = useState<string[]>([]);
+  const [focusAreas, setFocusAreas] = useState<string[]>(
+    FOCUS_AREAS.map((area) => area.value)
+  );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [recentSeeds, setRecentSeeds] = useState<
+    Array<{ seed: string; timestamp: string }>
+  >([]);
 
   const handleAddFocusArea = (value: string) => {
     if (!focusAreas.includes(value)) {
@@ -110,6 +108,13 @@ export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
           prompt: prompt.trim() || undefined,
         },
       });
+
+      // 保存新的种子到历史记录
+      setRecentSeeds((prev) => [
+        { seed: data.seed, timestamp: data.timestamp },
+        ...prev.slice(0, 4), // 只保留最近5个
+      ]);
+
       onGenerated(data);
       toast({
         title: "成功",
@@ -131,7 +136,7 @@ export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardContent className="pt-6">
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="space-y-2">
               <Label>世界观描述</Label>
               <div className="space-y-2">
@@ -139,7 +144,7 @@ export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="描述你想要创造的世界，例如：一个被魔法和科技共同支配的世界，有着浮空城市和地下文明..."
-                  className="min-h-[120px]"
+                  className="min-h-[120px] resize-none"
                 />
                 <Button
                   type="button"
@@ -158,31 +163,46 @@ export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
               <Input
                 value={seed}
                 onChange={(e) => setSeed(e.target.value)}
-                placeholder="例如: fantasy-2024"
+                placeholder="留空则随机生成"
               />
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">
                   世界种子决定了生成结果的唯一性。使用相同的种子将生成相同的世界。
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  <p className="text-sm text-muted-foreground">示例种子：</p>
-                  {SEED_EXAMPLES.map((example) => (
-                    <Button
-                      key={example}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSeed(example)}
-                      type="button"
-                    >
-                      {example}
-                    </Button>
-                  ))}
-                </div>
+                {recentSeeds.length > 0 && (
+                  <>
+                    <p className="text-sm text-muted-foreground mt-4">
+                      历史记录：
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {recentSeeds.map(({ seed: historySeed, timestamp }) => (
+                        <Button
+                          key={historySeed}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSeed(historySeed)}
+                          type="button"
+                          className="group"
+                        >
+                          <span>{historySeed}</span>
+                          <span className="text-xs text-muted-foreground ml-2 opacity-0 group-hover:opacity-100">
+                            {new Date(timestamp).toLocaleString()}
+                          </span>
+                        </Button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>世界复杂度 (1-10)</Label>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <Label>世界复杂度</Label>
+                <span className="text-sm text-muted-foreground">
+                  {complexity}/10
+                </span>
+              </div>
               <Slider
                 value={[complexity]}
                 onValueChange={([value]) => setComplexity(value)}
@@ -196,44 +216,32 @@ export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
               </p>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-4">
               <Label>重点领域</Label>
-              <Select onValueChange={handleAddFocusArea}>
-                <SelectTrigger>
-                  <SelectValue placeholder="选择重点生成的领域" />
-                </SelectTrigger>
-                <SelectContent>
-                  {FOCUS_AREAS.map((area) => (
-                    <SelectItem
-                      key={area.value}
-                      value={area.value}
-                      disabled={focusAreas.includes(area.value)}
-                    >
-                      <div className="flex flex-col">
-                        <span>{area.label}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {area.description}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <div className="flex flex-wrap gap-2 mt-2">
-                {focusAreas.map((area) => {
-                  const areaInfo = FOCUS_AREAS.find((a) => a.value === area);
-                  return (
-                    <Badge
-                      key={area}
-                      variant="secondary"
-                      className="cursor-pointer"
-                      onClick={() => handleRemoveFocusArea(area)}
-                    >
-                      {areaInfo?.label} ✕
-                    </Badge>
-                  );
-                })}
+              <div className="flex flex-wrap gap-2">
+                {FOCUS_AREAS.map((area) => (
+                  <Badge
+                    key={area.value}
+                    variant={
+                      focusAreas.includes(area.value) ? "default" : "outline"
+                    }
+                    className="cursor-pointer select-none"
+                    onClick={() => {
+                      if (focusAreas.includes(area.value)) {
+                        if (focusAreas.length > 1) {
+                          handleRemoveFocusArea(area.value);
+                        }
+                      } else {
+                        handleAddFocusArea(area.value);
+                      }
+                    }}
+                  >
+                    {area.label}
+                    <span className="ml-1 text-xs text-muted-foreground">
+                      {area.description}
+                    </span>
+                  </Badge>
+                ))}
               </div>
             </div>
           </div>
