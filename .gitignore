@@ -28,26 +28,11 @@ pnpm-lock.yaml
 .env.*.local
 .eslintcache
 
-
 **/__pycache__
 logs
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-vite.config.mts.*
-vite.config.mjs.*
-vite.config.js.*
-vite.config.ts.*
 
-# Editor directories and files
-.idea
-# .vscode
-*.suo
-*.ntvs*
-*.njsproj
 *.sln
 *.sw?
 .history

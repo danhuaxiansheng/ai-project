@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -28,20 +28,46 @@ const FOCUS_AREAS = [
 
 interface WorldGeneratorFormProps {
   onGenerated: (data: WorldData) => void;
+  initialState?: {
+    prompt: string;
+    seed: string;
+    complexity: number;
+    focusAreas: string[];
+  };
+  onStateChange?: (state: {
+    prompt: string;
+    seed: string;
+    complexity: number;
+    focusAreas: string[];
+  }) => void;
 }
 
-export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
+export function WorldGeneratorForm({
+  onGenerated,
+  initialState,
+  onStateChange,
+}: WorldGeneratorFormProps) {
   const [loading, setLoading] = useState(false);
-  const [seed, setSeed] = useState("");
-  const [prompt, setPrompt] = useState("");
-  const [complexity, setComplexity] = useState(5);
+  const [seed, setSeed] = useState(initialState?.seed || "");
+  const [prompt, setPrompt] = useState(initialState?.prompt || "");
+  const [complexity, setComplexity] = useState(initialState?.complexity || 5);
   const [focusAreas, setFocusAreas] = useState<string[]>(
-    FOCUS_AREAS.map((area) => area.value)
+    initialState?.focusAreas || FOCUS_AREAS.map((area) => area.value)
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recentSeeds, setRecentSeeds] = useState<
     Array<{ seed: string; timestamp: string }>
   >([]);
+
+  // 当表单状态改变时通知父组件
+  useEffect(() => {
+    onStateChange?.({
+      prompt,
+      seed,
+      complexity,
+      focusAreas,
+    });
+  }, [prompt, seed, complexity, focusAreas, onStateChange]);
 
   const handleAddFocusArea = (value: string) => {
     if (!focusAreas.includes(value)) {

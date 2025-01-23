@@ -11,6 +11,14 @@ export default function Home() {
   const [worldData, setWorldData] = useState<WorldData | null>(null);
   const [activeTab, setActiveTab] = useState("list");
 
+  // 保存表单状态
+  const [formState, setFormState] = useState({
+    prompt: "",
+    seed: "",
+    complexity: 5,
+    focusAreas: [] as string[],
+  });
+
   const handleWorldSelect = async (worldId: string) => {
     try {
       const data = await worldApi.getWorld("default_project", worldId);
@@ -44,7 +52,11 @@ export default function Home() {
         </TabsContent>
 
         <TabsContent value="create" className="mt-6">
-          <WorldGeneratorForm onGenerated={handleWorldGenerated} />
+          <WorldGeneratorForm
+            onGenerated={handleWorldGenerated}
+            initialState={formState}
+            onStateChange={setFormState}
+          />
         </TabsContent>
 
         <TabsContent value="preview" className="mt-6">
