@@ -16,6 +16,7 @@ import { worldApi, type WorldData } from "@/lib/api/world";
 import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 
 const FOCUS_AREAS = [
   { value: "geography", label: "地理", description: "地形、气候、资源分布" },
@@ -25,6 +26,13 @@ const FOCUS_AREAS = [
   { value: "religion", label: "宗教", description: "信仰体系、宗教组织" },
 ];
 
+const SEED_EXAMPLES = [
+  "fantasy-2024",
+  "medieval-world",
+  "future-earth",
+  "magic-realm",
+];
+
 interface WorldGeneratorFormProps {
   onGenerated: (data: WorldData) => void;
 }
@@ -32,8 +40,10 @@ interface WorldGeneratorFormProps {
 export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
   const [loading, setLoading] = useState(false);
   const [seed, setSeed] = useState("");
+  const [prompt, setPrompt] = useState("");
   const [complexity, setComplexity] = useState(5);
   const [focusAreas, setFocusAreas] = useState<string[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const handleAddFocusArea = (value: string) => {
     if (!focusAreas.includes(value)) {
@@ -43,6 +53,39 @@ export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
 
   const handleRemoveFocusArea = (value: string) => {
     setFocusAreas(focusAreas.filter((area) => area !== value));
+  };
+
+  const handleAnalyzePrompt = async () => {
+    if (!prompt.trim()) {
+      toast({
+        title: "提示",
+        description: "请输入世界观描述",
+        variant: "default",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const data = await worldApi.analyzePrompt(prompt);
+      // 根据分析结果设置表单值
+      if (data.suggestedSeed) setSeed(data.suggestedSeed);
+      if (data.suggestedComplexity) setComplexity(data.suggestedComplexity);
+      if (data.suggestedFocusAreas) setFocusAreas(data.suggestedFocusAreas);
+
+      toast({
+        title: "分析完成",
+        description: "已根据描述调整生成参数",
+      });
+    } catch (error) {
+      toast({
+        title: "错误",
+        description: "分析失败，请重试",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,15 +129,52 @@ export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
         <CardContent className="pt-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>随机种子 (可选)</Label>
+              <Label>世界观描述</Label>
+              <div className="space-y-2">
+                <Textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="描述你想要创造的世界，例如：一个被魔法和科技共同支配的世界，有着浮空城市和地下文明..."
+                  className="min-h-[120px]"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleAnalyzePrompt}
+                  disabled={isAnalyzing || !prompt.trim()}
+                  className="w-full"
+                >
+                  {isAnalyzing ? "分析中..." : "分析描述并调整参数"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>世界种子</Label>
               <Input
                 value={seed}
                 onChange={(e) => setSeed(e.target.value)}
-                placeholder="留空则随机生成"
+                placeholder="例如: fantasy-2024"
               />
-              <p className="text-sm text-muted-foreground">
-                使用相同的种子将生成相同的世界
-              </p>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  世界种子决定了生成结果的唯一性。使用相同的种子将生成相同的世界。
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <p className="text-sm text-muted-foreground">示例种子：</p>
+                  {SEED_EXAMPLES.map((example) => (
+                    <Button
+                      key={example}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSeed(example)}
+                      type="button"
+                    >
+                      {example}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">

@@ -27,6 +27,18 @@ export interface WorldData {
   };
 }
 
+export interface PromptAnalysisResult {
+  suggestedSeed?: string;
+  suggestedComplexity?: number;
+  suggestedFocusAreas?: string[];
+  analysis: {
+    worldOrigin?: string;
+    geography?: string;
+    civilization?: string;
+    keyThemes: string[];
+  };
+}
+
 export const worldApi = {
   async generateWorld(params: WorldGenerationParams): Promise<WorldData> {
     const { data } = await api.post<WorldData>("/api/generate", params);
@@ -35,6 +47,13 @@ export const worldApi = {
 
   async checkHealth(): Promise<{ status: string }> {
     const { data } = await api.get("/api/health");
+    return data;
+  },
+
+  async analyzePrompt(prompt: string): Promise<PromptAnalysisResult> {
+    const { data } = await api.post<PromptAnalysisResult>("/api/analyze", {
+      prompt,
+    });
     return data;
   },
 };
