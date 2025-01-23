@@ -54,10 +54,11 @@ export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
   };
 
   const handleAnalyzePrompt = async () => {
-    if (!prompt.trim()) {
+    const promptText = prompt.trim();
+    if (!promptText) {
       toast({
         title: "提示",
-        description: "请输入世界观描述",
+        description: "请先输入世界观描述",
         variant: "default",
       });
       return;
@@ -65,11 +66,18 @@ export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
 
     setIsAnalyzing(true);
     try {
-      const data = await worldApi.analyzePrompt(prompt);
-      // 根据分析结果设置表单值
+      const data = await worldApi.analyzePrompt(promptText);
+
+      // 只在有建议值时更新对应字段
       if (data.suggestedSeed) setSeed(data.suggestedSeed);
       if (data.suggestedComplexity) setComplexity(data.suggestedComplexity);
-      if (data.suggestedFocusAreas) setFocusAreas(data.suggestedFocusAreas);
+      if (data.suggestedFocusAreas && data.suggestedFocusAreas.length > 0) {
+        // 合并现有选择和建议的领域，去重
+        const newFocusAreas = Array.from(
+          new Set([...focusAreas, ...data.suggestedFocusAreas])
+        );
+        setFocusAreas(newFocusAreas);
+      }
 
       toast({
         title: "分析完成",
@@ -108,13 +116,6 @@ export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
           prompt: prompt.trim() || undefined,
         },
       });
-
-      // 保存新的种子到历史记录
-      setRecentSeeds((prev) => [
-        { seed: data.seed, timestamp: data.timestamp },
-        ...prev.slice(0, 4), // 只保留最近5个
-      ]);
-
       onGenerated(data);
       toast({
         title: "成功",

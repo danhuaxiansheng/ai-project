@@ -1,0 +1,60 @@
+{
+  "id": "world-3123-9799",
+  "version": "1.0.0",
+  "timestamp": "2025-01-23T22:48:29.391070",
+  "seed": "3123-9799",
+  "name": "世界-3123-9",
+  "description": "3123",
+  "tags": [
+    "geography",
+    "civilization",
+    "history",
+    "culture",
+    "religion"
+  ],
+  "created_at": "2025-01-23T22:48:29.391077",
+  "data": {
+    "geography": {
+      "terrain": "desert",
+      "climate": "tropical"
+    },
+    "civilization": {
+      "technology_level": "primitive",
+      "social_structure": "tribal",
+      "major_industries": [
+        "agriculture",
+        "technology",
+        "crafting"
+      ],
+      "population_size": 114307,
+      "development_level": 8,
+      "cultural_traits": {
+        "values": "honor",
+        "beliefs": "balanced",
+        "customs": "progressive"
+      }
+    },
+    "history": [
+      {
+        "year": -570,
+        "event": "历史事件 2"
+      },
+      {
+        "year": -316,
+        "event": "历史事件 4"
+      },
+      {
+        "year": -152,
+        "event": "历史事件 1"
+      },
+      {
+        "year": -140,
+        "event": "历史事件 3"
+      },
+      {
+        "year": 1875,
+        "event": "历史事件 5"
+      }
+    ]
+  }
+}

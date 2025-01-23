@@ -13,6 +13,20 @@
         "civilization",
         "geography"
       ]
+    },
+    "world-3123-9799": {
+      "created_at": "2025-01-23T22:48:29.391077",
+      "seed": "3123-9799",
+      "path": "D:\\GitHub\\ai-project\\apps\\novel\\default_project\\worlds\\world-3123-9799",
+      "name": "世界-3123-9",
+      "description": "3123",
+      "tags": [
+        "geography",
+        "civilization",
+        "history",
+        "culture",
+        "religion"
+      ]
     }
   }
 }
