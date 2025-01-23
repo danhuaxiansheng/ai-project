@@ -99,7 +99,7 @@ class WorldGenerator:
                     "civilization": self._generate_civilization(random_generator),
                     "history": self._generate_history(random_generator, complexity),
                     "races": self._generate_races(random_generator, complexity),
-                    "systems": self._generate_systems(random_generator, complexity)
+                    "systems": self._generate_systems(random_generator, complexity, focus_areas)
                 }
             }
             
@@ -271,7 +271,8 @@ class WorldGenerator:
         # 生成文明描述
         description = self._generate_civilization_description(
             tech_level, social_structure, selected_industries,
-            tech_levels, social_structures, industries
+            tech_levels, social_structures, industries,
+            random_generator
         )
         
         return {
@@ -306,7 +307,8 @@ class WorldGenerator:
     def _generate_civilization_description(
         self, tech_level: str, social_structure: str,
         industries: List[str], tech_names: Dict,
-        social_names: Dict, industry_names: Dict
+        social_names: Dict, industry_names: Dict,
+        random_generator: random.Random
     ) -> str:
         """生成文明描述"""
         templates = [
@@ -667,9 +669,10 @@ class WorldGenerator:
             ])
         }
 
-    def _generate_systems(self, random_generator: random.Random, complexity: int) -> Dict:
+    def _generate_systems(self, random_generator: random.Random, complexity: int, focus_areas: List[str] = None) -> Dict:
         """生成魔法/科技系统"""
         systems_data = {}
+        focus_areas = focus_areas or []  # 如果没有传入，使用空列表
         
         # 魔法系统定义
         magic_types = {
@@ -1094,28 +1097,8 @@ async def list_worlds(project_name: str):
 @app.delete("/api/worlds/{project_name}/{world_id}")
 async def delete_world(project_name: str, world_id: str):
     try:
-        # 从文件系统删除世界数据
-        world_path = os.path.join(file_storage.base_path, project_name, "worlds", world_id)
-        if not os.path.exists(world_path):
-            raise HTTPException(status_code=404, detail="世界不存在")
-
-        # 删除世界文件夹及其内容
-        shutil.rmtree(world_path)
-        
-        # 更新项目索引
-        index_path = os.path.join(file_storage.base_path, project_name, "project_index.json")
-        if os.path.exists(index_path):
-            with open(index_path, 'r', encoding='utf-8') as f:
-                index_data = json.load(f)
-            
-            # 从索引中移除世界
-            if "worlds" in index_data and world_id in index_data["worlds"]:
-                del index_data["worlds"][world_id]
-                
-                # 保存更新后的索引
-                with open(index_path, 'w', encoding='utf-8') as f:
-                    json.dump(index_data, f, ensure_ascii=False, indent=2)
-
+        # 删除世界数据及其索引
+        file_storage.delete_world(project_name, world_id)
         return {"status": "success", "message": "世界已删除"}
 
     except Exception as e:

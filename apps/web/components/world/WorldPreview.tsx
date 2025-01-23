@@ -178,36 +178,42 @@ export function WorldPreview({ data, onUpdated }: WorldPreviewProps) {
                 <div className="space-y-2">
                   <h4 className="font-semibold">技术水平</h4>
                   <p className="text-lg">
-                    {TECH_LEVEL_MAP[data.data.civilization.technology_level] ||
-                      data.data.civilization.technology_level}
+                    {data.data.civilization.technology.name}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {data.data.civilization.technology.description}
                   </p>
                 </div>
                 <div className="space-y-2">
                   <h4 className="font-semibold">社会结构</h4>
                   <p className="text-lg">
-                    {SOCIAL_STRUCTURE_MAP[
-                      data.data.civilization.social_structure
-                    ] || data.data.civilization.social_structure}
+                    {data.data.civilization.society.name}
                   </p>
                 </div>
                 <div className="space-y-2">
                   <h4 className="font-semibold">主要产业</h4>
                   <div className="flex flex-wrap gap-2">
-                    {data.data.civilization.major_industries.map((industry) => (
-                      <Badge
-                        key={industry}
-                        variant="secondary"
-                        className="text-sm"
-                      >
-                        {INDUSTRY_MAP[industry] || industry}
-                      </Badge>
-                    ))}
+                    {data.data.civilization.economy.industries.map(
+                      (industry) => (
+                        <Badge
+                          key={industry.id}
+                          variant="secondary"
+                          className="text-sm"
+                        >
+                          {industry.name}
+                        </Badge>
+                      )
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
                   <h4 className="font-semibold">发展水平</h4>
                   <p className="text-lg">
-                    Level {data.data.civilization.development_level}
+                    Level {data.data.civilization.society.development_level}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    人口规模：
+                    {data.data.civilization.society.population.toLocaleString()}
                   </p>
                 </div>
                 <div className="col-span-1 md:col-span-2 space-y-4">
@@ -218,22 +224,27 @@ export function WorldPreview({ data, onUpdated }: WorldPreviewProps) {
                         价值观
                       </p>
                       <p className="font-medium">
-                        {data.data.civilization.cultural_traits.values}
+                        {data.data.civilization.culture.values_name}
                       </p>
                     </div>
                     <div className="p-4 bg-muted rounded-lg">
                       <p className="text-sm text-muted-foreground mb-1">信仰</p>
                       <p className="font-medium">
-                        {data.data.civilization.cultural_traits.beliefs}
+                        {data.data.civilization.culture.beliefs_name}
                       </p>
                     </div>
                     <div className="p-4 bg-muted rounded-lg">
                       <p className="text-sm text-muted-foreground mb-1">习俗</p>
                       <p className="font-medium">
-                        {data.data.civilization.cultural_traits.customs}
+                        {data.data.civilization.culture.customs_name}
                       </p>
                     </div>
                   </div>
+                </div>
+                <div className="col-span-1 md:col-span-2">
+                  <p className="text-muted-foreground">
+                    {data.data.civilization.description}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -246,13 +257,57 @@ export function WorldPreview({ data, onUpdated }: WorldPreviewProps) {
               <CardTitle>历史事件</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {data.data.history.map((event, index) => (
-                  <div key={index} className="flex items-center space-x-4">
-                    <span className="font-semibold">年份 {event.year}</span>
-                    <span>{event.event}</span>
+              <div className="space-y-6">
+                {/* 时代列表 */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold">历史时期</h3>
+                  {data.data.history.eras.map((era, index) => (
+                    <div key={index} className="p-4 bg-muted rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="font-medium">{era.name}</h4>
+                        <span className="text-sm text-muted-foreground">
+                          {era.start_year} 至 {era.end_year}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {era.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 重要事件 */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold">重要事件</h3>
+                  {data.data.history.events.map((event, index) => (
+                    <div key={index} className="flex items-start space-x-4">
+                      <div className="min-w-[100px] text-right">
+                        <span className="font-medium">年份 {event.year}</span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="outline">{event.type_name}</Badge>
+                          <span className="text-sm text-muted-foreground">
+                            重要性: {event.significance}
+                          </span>
+                        </div>
+                        <p className="mt-1">{event.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 时间线摘要 */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold">时间线摘要</h3>
+                  <div className="space-y-2">
+                    {data.data.history.timeline.map((event, index) => (
+                      <p key={index} className="text-sm">
+                        {event}
+                      </p>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
             </CardContent>
           </Card>
