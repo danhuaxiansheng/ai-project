@@ -1,5 +1,5 @@
 {
-  "name": "web",
+  "name": "web-shadcn",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,15 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@radix-ui/react-dialog": "^1.1.5",
-    "@radix-ui/react-popover": "^1.1.5",
-    "@radix-ui/react-slider": "^1.2.2",
-    "@radix-ui/react-slot": "^1.1.1",
-    "@radix-ui/react-toast": "^1.2.5",
-    "axios": "^1.7.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "cmdk": "1.0.0",
     "lucide-react": "^0.473.0",
     "next": "14.2.16",
     "react": "^18",
@@ -26,7 +19,6 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@shadcn/ui": "^0.0.4",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
