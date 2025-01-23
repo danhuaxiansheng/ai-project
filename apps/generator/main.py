@@ -13,6 +13,7 @@ import jieba.analyse
 from utils.file_storage import FileStorage
 import os
 import json
+import shutil
 
 # 配置日志
 logging.basicConfig(
@@ -350,6 +351,37 @@ async def list_worlds(project_name: str):
 
     except Exception as e:
         logger.error(f"Error listing worlds: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/worlds/{project_name}/{world_id}")
+async def delete_world(project_name: str, world_id: str):
+    try:
+        # 从文件系统删除世界数据
+        world_path = os.path.join(file_storage.base_path, project_name, "worlds", world_id)
+        if not os.path.exists(world_path):
+            raise HTTPException(status_code=404, detail="世界不存在")
+
+        # 删除世界文件夹及其内容
+        shutil.rmtree(world_path)
+        
+        # 更新项目索引
+        index_path = os.path.join(file_storage.base_path, project_name, "project_index.json")
+        if os.path.exists(index_path):
+            with open(index_path, 'r', encoding='utf-8') as f:
+                index_data = json.load(f)
+            
+            # 从索引中移除世界
+            if "worlds" in index_data and world_id in index_data["worlds"]:
+                del index_data["worlds"][world_id]
+                
+                # 保存更新后的索引
+                with open(index_path, 'w', encoding='utf-8') as f:
+                    json.dump(index_data, f, ensure_ascii=False, indent=2)
+
+        return {"status": "success", "message": "世界已删除"}
+
+    except Exception as e:
+        logger.error(f"Error deleting world: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

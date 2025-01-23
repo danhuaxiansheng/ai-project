@@ -5,7 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO, isValid } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/components/ui/use-toast";
 
 interface WorldListProps {
   projectName?: string;
@@ -19,6 +30,7 @@ export function WorldList({
   const [worlds, setWorlds] = useState<Record<string, WorldSummary>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingWorld, setDeletingWorld] = useState<string | null>(null);
 
   useEffect(() => {
     loadWorlds();
@@ -51,6 +63,26 @@ export function WorldList({
     } catch (error) {
       console.error("Invalid date:", dateString);
       return "未知时间";
+    }
+  };
+
+  const handleDelete = async (worldId: string) => {
+    try {
+      await worldApi.deleteWorld(projectName, worldId);
+      toast({
+        title: "成功",
+        description: "世界已删除",
+      });
+      loadWorlds(); // 重新加载列表
+    } catch (error) {
+      console.error("Failed to delete world:", error);
+      toast({
+        title: "错误",
+        description: "删除失败，请重试",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingWorld(null);
     }
   };
 
@@ -91,18 +123,30 @@ export function WorldList({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.entries(worlds).map(([id, world]) => (
-            <Card
-              key={id}
-              className="cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => onSelect(id)}
-            >
+            <Card key={id}>
               <CardHeader>
                 <CardTitle className="flex justify-between items-center">
                   <span>{world.name || `世界-${id}`}</span>
-                  <Badge variant="outline">{world.seed}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{world.seed}</Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive/90"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeletingWorld(id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent
+                className="cursor-pointer hover:bg-accent/50 transition-colors"
+                onClick={() => onSelect(id)}
+              >
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">
                     {world.description || "暂无描述"}
@@ -123,6 +167,29 @@ export function WorldList({
           ))}
         </div>
       )}
+
+      <AlertDialog
+        open={!!deletingWorld}
+        onOpenChange={() => setDeletingWorld(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除</AlertDialogTitle>
+            <AlertDialogDescription>
+              你确定要删除这个世界吗？此操作不可撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingWorld && handleDelete(deletingWorld)}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

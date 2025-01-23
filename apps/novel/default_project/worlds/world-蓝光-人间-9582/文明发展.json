@@ -1,16 +1,16 @@
 {
-  "technology_level": "primitive",
+  "technology_level": "renaissance",
   "social_structure": "tribal",
   "major_industries": [
-    "mining",
+    "crafting",
     "magic",
-    "crafting"
+    "education"
   ],
-  "population_size": 967485,
+  "population_size": 602961,
   "development_level": 10,
   "cultural_traits": {
-    "values": "honor",
-    "beliefs": "spiritual",
+    "values": "wisdom",
+    "beliefs": "rational",
     "customs": "mixed"
   }
 }

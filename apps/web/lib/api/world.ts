@@ -114,4 +114,12 @@ export const worldApi = {
     const { data } = await api.get(`/api/worlds/${projectName}`);
     return data.worlds;
   },
+
+  async deleteWorld(
+    projectName: string,
+    worldId: string
+  ): Promise<{ status: string; message: string }> {
+    const { data } = await api.delete(`/api/worlds/${projectName}/${worldId}`);
+    return data;
+  },
 };
