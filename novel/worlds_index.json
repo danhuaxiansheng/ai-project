@@ -1,8 +1,0 @@
-apps/novel/
-├── worlds_index.json
-└── world-123/
-    ├── 基础信息.json
-    ├── 地理环境.json
-    ├── 文明发展.json
-    ├── 历史事件.json
-    └── 完整数据.json
