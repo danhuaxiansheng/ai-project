@@ -11,7 +11,7 @@ class FileStorage:
     def save_world_data(self, world_data: Dict[str, Any], project_name: Optional[str] = None) -> Dict[str, str]:
         """保存世界设定数据到文件系统"""
         world_id = world_data["id"]
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().isoformat()  # 使用 ISO 格式
         
         # 如果没有指定项目名，使用默认项目
         project_name = project_name or "default_project"
@@ -63,7 +63,7 @@ class FileStorage:
         # 更新世界信息
         index_data["worlds"] = index_data.get("worlds", {})
         index_data["worlds"][world_id] = {
-            "created_at": datetime.now().isoformat(),  # 使用 ISO 格式的时间戳
+            "created_at": world_data.get("created_at", datetime.now().isoformat()),
             "seed": world_data["seed"],
             "path": world_path,
             "name": world_data.get("name", f"世界-{world_id}"),
@@ -85,14 +85,14 @@ class FileStorage:
         index_data["projects"] = index_data.get("projects", {})
         if project_name not in index_data["projects"]:
             index_data["projects"][project_name] = {
-                "created_at": timestamp,
+                "created_at": datetime.now().isoformat(),  # 使用 ISO 格式
                 "worlds": []
             }
         
         # 添加世界引用
         world_ref = {
             "id": world_id,
-            "created_at": timestamp,
+            "created_at": datetime.now().isoformat(),  # 使用 ISO 格式
             "seed": world_data["seed"]
         }
         if world_ref not in index_data["projects"][project_name]["worlds"]:

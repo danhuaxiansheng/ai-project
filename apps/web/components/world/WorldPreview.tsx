@@ -14,6 +14,7 @@ import { WorldEditor } from "./WorldEditor";
 
 interface WorldPreviewProps {
   data: WorldData;
+  onUpdated?: (data: WorldData) => void;
 }
 
 const TECH_LEVEL_MAP: Record<string, string> = {
@@ -46,7 +47,7 @@ const INDUSTRY_MAP: Record<string, string> = {
   education: "教育产业",
 };
 
-export function WorldPreview({ data }: WorldPreviewProps) {
+export function WorldPreview({ data, onUpdated }: WorldPreviewProps) {
   const [isEditing, setIsEditing] = useState(false);
 
   const handleDownload = () => {
@@ -110,8 +111,8 @@ export function WorldPreview({ data }: WorldPreviewProps) {
       <WorldEditor
         data={data}
         onSaved={(updatedData) => {
-          // 更新数据并退出编辑模式
           setIsEditing(false);
+          onUpdated?.(updatedData);
         }}
       />
     );

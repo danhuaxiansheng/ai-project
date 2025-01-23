@@ -29,7 +29,7 @@ pnpm-lock.yaml
 .eslintcache
 
 
-__pycache__
+**/__pycache__
 logs
 *.log
 npm-debug.log*

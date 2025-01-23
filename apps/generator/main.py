@@ -79,12 +79,22 @@ class WorldGenerator:
             
             logger.info(f"Generating world with seed: {seed}")
             
+            # 获取提示词
+            prompt = kwargs.get("prompt", "")
+            
+            # 生成世界ID
+            world_id = f"world-{seed}"
+            
             # 使用固定的种子生成世界内容
             return {
-                "id": f"world-{seed}",
+                "id": world_id,
                 "version": "1.0.0",
                 "timestamp": datetime.now().isoformat(),
                 "seed": seed,
+                "name": f"世界-{seed[:6]}",  # 添加默认名称
+                "description": prompt or "这是一个新生成的世界",  # 使用提示词作为描述
+                "tags": focus_areas,  # 使用重点领域作为标签
+                "created_at": datetime.now().isoformat(),  # 添加创建时间
                 "data": {
                     "geography": self._generate_geography(random_generator),
                     "civilization": self._generate_civilization(random_generator),

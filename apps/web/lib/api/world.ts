@@ -21,12 +21,15 @@ export interface WorldData {
   seed: string;
   version: string;
   timestamp: string;
+  name: string;
+  description: string;
+  tags: string[];
+  created_at: string;
   files?: Record<string, string>;
   data: {
     geography: {
       terrain: string;
       climate: string;
-      // ... 其他地理属性
     };
     civilization: {
       technology_level: string;
