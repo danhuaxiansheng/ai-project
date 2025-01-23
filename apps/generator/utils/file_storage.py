@@ -63,7 +63,7 @@ class FileStorage:
         # 更新世界信息
         index_data["worlds"] = index_data.get("worlds", {})
         index_data["worlds"][world_id] = {
-            "created_at": timestamp,
+            "created_at": datetime.now().isoformat(),  # 使用 ISO 格式的时间戳
             "seed": world_data["seed"],
             "path": world_path,
             "name": world_data.get("name", f"世界-{world_id}"),

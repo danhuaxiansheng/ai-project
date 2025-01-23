@@ -28,6 +28,8 @@ pnpm-lock.yaml
 .env.*.local
 .eslintcache
 
+
+__pycache__
 logs
 *.log
 npm-debug.log*

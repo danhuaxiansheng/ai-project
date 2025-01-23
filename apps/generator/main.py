@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, validator
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 import uvicorn
 import logging
 from datetime import datetime
@@ -11,6 +11,8 @@ import re
 import jieba
 import jieba.analyse
 from utils.file_storage import FileStorage
+import os
+import json
 
 # 配置日志
 logging.basicConfig(
@@ -271,6 +273,74 @@ def _analyze_civilization(text: str) -> str:
     elif "原始" in text or "蛮荒" in text:
         return "primitive"
     return "standard"
+
+@app.get("/api/worlds/{project_name}/{world_id}")
+async def get_world(project_name: str, world_id: str):
+    try:
+        # 从文件系统加载世界数据
+        world_path = os.path.join(file_storage.base_path, project_name, "worlds", world_id)
+        if not os.path.exists(world_path):
+            raise HTTPException(status_code=404, detail="世界不存在")
+
+        # 读取完整数据
+        with open(os.path.join(world_path, "完整数据.json"), 'r', encoding='utf-8') as f:
+            world_data = json.load(f)
+
+        return world_data
+
+    except Exception as e:
+        logger.error(f"Error loading world data: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.patch("/api/worlds/{project_name}/{world_id}")
+async def update_world(project_name: str, world_id: str, updates: Dict[str, Any]):
+    try:
+        # 从文件系统加载现有数据
+        world_path = os.path.join(file_storage.base_path, project_name, "worlds", world_id)
+        if not os.path.exists(world_path):
+            raise HTTPException(status_code=404, detail="世界不存在")
+
+        # 读取完整数据
+        with open(os.path.join(world_path, "完整数据.json"), 'r', encoding='utf-8') as f:
+            world_data = json.load(f)
+
+        # 应用更新
+        for key, value in updates.items():
+            if key.startswith("data."):
+                # 处理嵌套更新，如 "data.geography.terrain"
+                parts = key.split(".")
+                target = world_data
+                for part in parts[:-1]:
+                    target = target[part]
+                target[parts[-1]] = value
+            else:
+                world_data[key] = value
+
+        # 保存更新后的数据
+        saved_files = file_storage.save_world_data(world_data, project_name)
+        
+        return {"status": "success", "files": saved_files}
+
+    except Exception as e:
+        logger.error(f"Error updating world data: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/worlds/{project_name}")
+async def list_worlds(project_name: str):
+    try:
+        # 读取项目索引
+        index_path = os.path.join(file_storage.base_path, project_name, "project_index.json")
+        if not os.path.exists(index_path):
+            return {"worlds": []}
+
+        with open(index_path, 'r', encoding='utf-8') as f:
+            index_data = json.load(f)
+
+        return {"worlds": index_data.get("worlds", {})}
+
+    except Exception as e:
+        logger.error(f"Error listing worlds: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     logger.info("Starting Virtual World Generator API")

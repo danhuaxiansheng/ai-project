@@ -7,6 +7,14 @@
       "name": "世界-world-2b4cffb3",
       "description": "",
       "tags": []
+    },
+    "world-d1f1b85d": {
+      "created_at": "20250123_222830",
+      "seed": "d1f1b85d",
+      "path": "D:\\GitHub\\ai-project\\apps\\novel\\default_project\\worlds\\world-d1f1b85d",
+      "name": "世界-world-d1f1b85d",
+      "description": "",
+      "tags": []
     }
   }
 }

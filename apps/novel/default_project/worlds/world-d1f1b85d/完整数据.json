@@ -1,0 +1,38 @@
+{
+  "id": "world-d1f1b85d",
+  "version": "1.0.0",
+  "timestamp": "2025-01-23T22:28:30.373763",
+  "seed": "d1f1b85d",
+  "data": {
+    "geography": {
+      "terrain": "coastal",
+      "climate": "tropical"
+    },
+    "civilization": {
+      "technology_level": "primitive",
+      "social_structure": "tribal",
+      "major_industries": [
+        "mining",
+        "magic",
+        "crafting"
+      ],
+      "population_size": 967485,
+      "development_level": 10,
+      "cultural_traits": {
+        "values": "honor",
+        "beliefs": "spiritual",
+        "customs": "mixed"
+      }
+    },
+    "history": [
+      {
+        "year": -170,
+        "event": "历史事件 1"
+      },
+      {
+        "year": 1546,
+        "event": "历史事件 2"
+      }
+    ]
+  }
+}

@@ -59,6 +59,15 @@ export interface PromptAnalysisResult {
   };
 }
 
+export interface WorldSummary {
+  id?: string;
+  name?: string;
+  seed: string;
+  created_at?: string;
+  description?: string;
+  tags?: string[];
+}
+
 export const worldApi = {
   async generateWorld(params: WorldGenerationParams): Promise<WorldData> {
     const { data } = await api.post<WorldData>("/api/generate", params);
@@ -75,5 +84,31 @@ export const worldApi = {
       prompt,
     });
     return data;
+  },
+
+  async getWorld(projectName: string, worldId: string): Promise<WorldData> {
+    const { data } = await api.get<WorldData>(
+      `/api/worlds/${projectName}/${worldId}`
+    );
+    return data;
+  },
+
+  async updateWorld(
+    projectName: string,
+    worldId: string,
+    updates: Partial<{
+      [K in keyof WorldData]: any;
+    }>
+  ): Promise<{ status: string; files: Record<string, string> }> {
+    const { data } = await api.patch(
+      `/api/worlds/${projectName}/${worldId}`,
+      updates
+    );
+    return data;
+  },
+
+  async listWorlds(projectName: string): Promise<Record<string, WorldSummary>> {
+    const { data } = await api.get(`/api/worlds/${projectName}`);
+    return data.worlds;
   },
 };

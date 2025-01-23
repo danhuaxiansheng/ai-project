@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { saveAs } from "file-saver";
 import { format } from "date-fns";
 import JSZip from "jszip";
+import { useState } from "react";
+import { WorldEditor } from "./WorldEditor";
 
 interface WorldPreviewProps {
   data: WorldData;
@@ -45,6 +47,8 @@ const INDUSTRY_MAP: Record<string, string> = {
 };
 
 export function WorldPreview({ data }: WorldPreviewProps) {
+  const [isEditing, setIsEditing] = useState(false);
+
   const handleDownload = () => {
     // 准备要保存的数据
     const worldData = {
@@ -101,11 +105,26 @@ export function WorldPreview({ data }: WorldPreviewProps) {
     });
   };
 
+  if (isEditing) {
+    return (
+      <WorldEditor
+        data={data}
+        onSaved={(updatedData) => {
+          // 更新数据并退出编辑模式
+          setIsEditing(false);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">世界预览</h2>
         <div className="space-x-2">
+          <Button variant="outline" onClick={() => setIsEditing(true)}>
+            编辑世界
+          </Button>
           <Button
             variant="outline"
             onClick={handleDownload}

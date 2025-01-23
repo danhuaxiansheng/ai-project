@@ -1,8 +1,27 @@
+"use client";
+
+import { useState } from "react";
+import { WorldGeneratorForm } from "@/components/world/WorldGeneratorForm";
+import { WorldPreview } from "@/components/world/WorldPreview";
+import { WorldList } from "@/components/world/WorldList";
+import { WorldData, worldApi } from "@/lib/api/world";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, History, Mountain, Users } from "lucide-react";
 
-export default function HomePage() {
+export default function Home() {
+  const [worldData, setWorldData] = useState<WorldData | null>(null);
+
+  const handleWorldSelect = async (worldId: string) => {
+    try {
+      const data = await worldApi.getWorld("default_project", worldId);
+      setWorldData(data);
+    } catch (error) {
+      console.error("Failed to load world:", error);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
@@ -75,6 +94,32 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      <main className="container mx-auto py-6 space-y-8">
+        <h1 className="text-3xl font-bold">虚拟世界生成器</h1>
+
+        <Tabs defaultValue={worldData ? "preview" : "list"}>
+          <TabsList>
+            <TabsTrigger value="list">已有世界</TabsTrigger>
+            <TabsTrigger value="create">创建新世界</TabsTrigger>
+            {worldData && <TabsTrigger value="preview">世界预览</TabsTrigger>}
+          </TabsList>
+
+          <TabsContent value="list">
+            <WorldList onSelect={handleWorldSelect} />
+          </TabsContent>
+
+          <TabsContent value="create">
+            <WorldGeneratorForm onGenerated={setWorldData} />
+          </TabsContent>
+
+          {worldData && (
+            <TabsContent value="preview">
+              <WorldPreview data={worldData} />
+            </TabsContent>
+          )}
+        </Tabs>
+      </main>
     </div>
   );
 }
