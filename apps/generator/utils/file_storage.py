@@ -2,6 +2,7 @@ import os
 import json
 from datetime import datetime
 from typing import Dict, Any, Optional
+import shutil
 
 class FileStorage:
     def __init__(self, base_path: str = "../novel"):
@@ -107,4 +108,43 @@ class FileStorage:
         if os.path.exists(index_path):
             with open(index_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        return {} 
+        return {}
+
+    def delete_world(self, project_name: str, world_id: str) -> None:
+        """删除世界数据及其相关索引"""
+        try:
+            # 1. 删除世界文件夹
+            world_path = os.path.join(self.base_path, project_name, "worlds", world_id)
+            if os.path.exists(world_path):
+                shutil.rmtree(world_path)
+            
+            # 2. 更新项目索引
+            project_index_path = os.path.join(self.base_path, project_name, "project_index.json")
+            if os.path.exists(project_index_path):
+                with open(project_index_path, 'r', encoding='utf-8') as f:
+                    project_index = json.load(f)
+                
+                if "worlds" in project_index and world_id in project_index["worlds"]:
+                    del project_index["worlds"][world_id]
+                    
+                    with open(project_index_path, 'w', encoding='utf-8') as f:
+                        json.dump(project_index, f, ensure_ascii=False, indent=2)
+            
+            # 3. 更新全局索引
+            global_index_path = os.path.join(self.base_path, "worlds_index.json")
+            if os.path.exists(global_index_path):
+                with open(global_index_path, 'r', encoding='utf-8') as f:
+                    global_index = json.load(f)
+                
+                if "projects" in global_index and project_name in global_index["projects"]:
+                    # 从项目的世界列表中移除
+                    project_worlds = global_index["projects"][project_name]["worlds"]
+                    global_index["projects"][project_name]["worlds"] = [
+                        w for w in project_worlds if w["id"] != world_id
+                    ]
+                    
+                    with open(global_index_path, 'w', encoding='utf-8') as f:
+                        json.dump(global_index, f, ensure_ascii=False, indent=2)
+        
+        except Exception as e:
+            raise Exception(f"删除世界失败: {str(e)}") 
