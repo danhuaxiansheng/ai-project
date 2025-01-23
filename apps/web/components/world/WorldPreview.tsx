@@ -5,10 +5,41 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Download, Share2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface WorldPreviewProps {
   data: WorldData;
 }
+
+const TECH_LEVEL_MAP: Record<string, string> = {
+  primitive: "原始",
+  medieval: "中世纪",
+  renaissance: "文艺复兴",
+  industrial: "工业化",
+  modern: "现代",
+  futuristic: "未来",
+  magical: "魔法",
+};
+
+const SOCIAL_STRUCTURE_MAP: Record<string, string> = {
+  tribal: "部落制",
+  feudal: "封建制",
+  monarchy: "君主制",
+  republic: "共和制",
+  democracy: "民主制",
+  technocracy: "技术官僚制",
+  theocracy: "神权制",
+};
+
+const INDUSTRY_MAP: Record<string, string> = {
+  agriculture: "农业",
+  commerce: "商业",
+  crafting: "手工业",
+  mining: "采矿业",
+  magic: "魔法产业",
+  technology: "科技产业",
+  education: "教育产业",
+};
 
 export function WorldPreview({ data }: WorldPreviewProps) {
   const handleDownload = () => {
@@ -77,11 +108,49 @@ export function WorldPreview({ data }: WorldPreviewProps) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-semibold mb-2">技术水平</h4>
-                  <p>{data.data.civilization.technology_level}</p>
+                  <p>
+                    {TECH_LEVEL_MAP[data.data.civilization.technology_level] ||
+                      data.data.civilization.technology_level}
+                  </p>
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">社会结构</h4>
-                  <p>{data.data.civilization.social_structure}</p>
+                  <p>
+                    {SOCIAL_STRUCTURE_MAP[
+                      data.data.civilization.social_structure
+                    ] || data.data.civilization.social_structure}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">主要产业</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {data.data.civilization.major_industries.map((industry) => (
+                      <Badge key={industry} variant="secondary">
+                        {INDUSTRY_MAP[industry] || industry}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">发展水平</h4>
+                  <p>Level {data.data.civilization.development_level}</p>
+                </div>
+                <div className="col-span-2">
+                  <h4 className="font-semibold mb-2">文化特征</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">价值观</p>
+                      <p>{data.data.civilization.cultural_traits.values}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">信仰</p>
+                      <p>{data.data.civilization.cultural_traits.beliefs}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">习俗</p>
+                      <p>{data.data.civilization.cultural_traits.customs}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>

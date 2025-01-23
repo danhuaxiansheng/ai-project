@@ -105,17 +105,21 @@ export function WorldGeneratorForm({ onGenerated }: WorldGeneratorFormProps) {
       const data = await worldApi.generateWorld({
         seed,
         complexity,
-        focusAreas,
+        focus_areas: focusAreas,
+        additional_params: {
+          prompt: prompt.trim() || undefined,
+        },
       });
       onGenerated(data);
       toast({
         title: "成功",
         description: "世界生成完成！",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Generation error:", error);
       toast({
         title: "错误",
-        description: "生成失败，请重试",
+        description: error.response?.data?.detail || "生成失败，请重试",
         variant: "destructive",
       });
     } finally {

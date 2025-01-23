@@ -12,8 +12,8 @@ const api = axios.create({
 export interface WorldGenerationParams {
   seed?: string;
   complexity: number;
-  focusAreas: string[];
-  additionalParams?: Record<string, any>;
+  focus_areas: string[];
+  additional_params?: Record<string, any>;
 }
 
 export interface WorldData {

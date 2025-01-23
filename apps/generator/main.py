@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import List, Optional, Dict
 import uvicorn
 import logging
@@ -12,7 +12,10 @@ import jieba
 import jieba.analyse
 
 # 配置日志
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="虚拟世界生成器 API")
@@ -32,6 +35,21 @@ class WorldGenerationParams(BaseModel):
     focus_areas: List[str]
     additional_params: Optional[dict] = None
 
+    @validator('complexity')
+    def validate_complexity(cls, v):
+        if not 1 <= v <= 10:
+            raise ValueError("复杂度必须在1到10之间")
+        return v
+
+    @validator('focus_areas')
+    def validate_focus_areas(cls, v):
+        valid_areas = {"geography", "civilization", "history", "culture", "religion"}
+        if not v:
+            raise ValueError("至少需要选择一个重点领域")
+        if not all(area in valid_areas for area in v):
+            raise ValueError("包含无效的重点领域")
+        return v
+
 class PromptAnalysis(BaseModel):
     prompt: str
 
@@ -44,27 +62,31 @@ class PromptAnalysisResult(BaseModel):
 # 模拟 WorldGenerator 类（临时）
 class WorldGenerator:
     def generate_world(self, seed: Optional[str], complexity: int, focus_areas: List[str], **kwargs) -> Dict:
-        # 如果没有提供种子，生成一个随机种子
-        if not seed:
-            seed = hashlib.md5(str(random.random()).encode()).hexdigest()[:8]
-        
-        # 使用种子初始化随机数生成器
-        random_generator = random.Random(seed)
-        
-        logger.info(f"Generating world with seed: {seed}")
-        
-        # 使用固定的种子生成世界内容
-        return {
-            "id": f"world-{seed}",
-            "version": "1.0.0",
-            "timestamp": datetime.now().isoformat(),
-            "seed": seed,  # 返回使用的种子
-            "data": {
-                "geography": self._generate_geography(random_generator),
-                "civilization": self._generate_civilization(random_generator),
-                "history": self._generate_history(random_generator)
+        try:
+            # 如果没有提供种子，生成一个随机种子
+            if not seed:
+                seed = hashlib.md5(str(random.random()).encode()).hexdigest()[:8]
+            
+            # 使用种子初始化随机数生成器
+            random_generator = random.Random(seed)
+            
+            logger.info(f"Generating world with seed: {seed}")
+            
+            # 使用固定的种子生成世界内容
+            return {
+                "id": f"world-{seed}",
+                "version": "1.0.0",
+                "timestamp": datetime.now().isoformat(),
+                "seed": seed,
+                "data": {
+                    "geography": self._generate_geography(random_generator),
+                    "civilization": self._generate_civilization(random_generator),
+                    "history": self._generate_history(random_generator, complexity)
+                }
             }
-        }
+        except Exception as e:
+            logger.error(f"World generation error: {str(e)}")
+            raise
 
     def _generate_geography(self, random_generator: random.Random) -> Dict:
         terrains = ["mountainous", "plains", "coastal", "desert", "forest"]
@@ -75,19 +97,71 @@ class WorldGenerator:
             "climate": random_generator.choice(climates)
         }
 
-    # ... 其他生成方法类似
+    def _generate_civilization(self, random_generator: random.Random) -> Dict:
+        # 定义可能的技术水平
+        tech_levels = [
+            "primitive",      # 原始
+            "medieval",       # 中世纪
+            "renaissance",    # 文艺复兴
+            "industrial",     # 工业化
+            "modern",        # 现代
+            "futuristic",    # 未来
+            "magical"        # 魔法文明
+        ]
+        
+        # 定义可能的社会结构
+        social_structures = [
+            "tribal",        # 部落制
+            "feudal",        # 封建制
+            "monarchy",      # 君主制
+            "republic",      # 共和制
+            "democracy",     # 民主制
+            "technocracy",   # 技术官僚制
+            "theocracy"      # 神权制
+        ]
+        
+        # 定义主要产业
+        industries = [
+            "agriculture",   # 农业
+            "commerce",      # 商业
+            "crafting",      # 手工业
+            "mining",        # 采矿业
+            "magic",         # 魔法产业
+            "technology",    # 科技产业
+            "education"      # 教育产业
+        ]
+        
+        # 生成文明特征
+        return {
+            "technology_level": random_generator.choice(tech_levels),
+            "social_structure": random_generator.choice(social_structures),
+            "major_industries": random_generator.sample(industries, k=3),
+            "population_size": random_generator.randint(1000, 1000000),
+            "development_level": random_generator.randint(1, 10),
+            "cultural_traits": {
+                "values": ["honor", "wisdom", "progress"][random_generator.randint(0, 2)],
+                "beliefs": ["spiritual", "rational", "balanced"][random_generator.randint(0, 2)],
+                "customs": ["traditional", "progressive", "mixed"][random_generator.randint(0, 2)]
+            }
+        }
+
+    def _generate_history(self, random_generator: random.Random, complexity: int) -> List[Dict]:
+        events = []
+        num_events = max(1, complexity // 2)  # 根据复杂度生成事件数量
+        
+        for i in range(num_events):
+            year = random_generator.randint(-1000, 2000)
+            events.append({
+                "year": year,
+                "event": f"历史事件 {i+1}"
+            })
+        
+        return sorted(events, key=lambda x: x["year"])
 
 @app.post("/api/generate")
 async def generate_world(params: WorldGenerationParams):
     try:
         logger.info(f"Received generation request with params: {params}")
-        
-        # 参数验证
-        if params.complexity < 1 or params.complexity > 10:
-            raise ValueError("Complexity must be between 1 and 10")
-        
-        if not params.focus_areas:
-            raise ValueError("At least one focus area must be specified")
         
         generator = WorldGenerator()
         world_data = generator.generate_world(
