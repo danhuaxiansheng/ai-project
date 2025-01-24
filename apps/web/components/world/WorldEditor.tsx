@@ -1,78 +1,89 @@
-import { useState } from "react";
-import { WorldData, worldApi } from "@/lib/api/world";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "@/components/ui/use-toast";
+"use client";
+
+import React from "react";
+import { World } from "../lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface WorldEditorProps {
-  data: WorldData;
-  onSaved: (data: WorldData) => void;
+  world: World;
 }
 
-export function WorldEditor({ data: initialData, onSaved }: WorldEditorProps) {
-  const [data, setData] = useState(initialData);
-  const [loading, setLoading] = useState(false);
-
-  const handleUpdate = async (updates: Partial<WorldData>) => {
-    setLoading(true);
-    try {
-      await worldApi.updateWorld(
-        data.project || "default_project",
-        data.id,
-        updates
-      );
-      const updatedData = await worldApi.getWorld(
-        data.project || "default_project",
-        data.id
-      );
-      setData(updatedData);
-      onSaved(updatedData);
-      toast({
-        title: "成功",
-        description: "世界设定已更新",
-      });
-    } catch (error) {
-      toast({
-        title: "错误",
-        description: "更新失败，请重试",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export const WorldEditor: React.FC<WorldEditorProps> = ({ world }) => {
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">编辑世界</h2>
-        <Button onClick={() => handleUpdate(data)} disabled={loading}>
-          {loading ? "保存中..." : "保存更改"}
-        </Button>
-      </div>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>{world.name}</CardTitle>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary">复杂度: {world.complexity}</Badge>
+            {world.focus_areas?.map((area) => (
+              <Badge key={area} variant="outline">
+                {area}
+              </Badge>
+            ))}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p>{world.description}</p>
+        </CardContent>
+      </Card>
 
-      <Tabs defaultValue="geography">
-        <TabsList>
-          <TabsTrigger value="geography">地理环境</TabsTrigger>
-          <TabsTrigger value="civilization">文明发展</TabsTrigger>
-          <TabsTrigger value="history">历史事件</TabsTrigger>
-        </TabsList>
+      <Accordion type="single" collapsible defaultValue="geography">
+        {world.geography && (
+          <AccordionItem value="geography">
+            <AccordionTrigger>地理环境</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">地形概述</h4>
+                  <p>{world.geography.terrain.summary}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">气候特征</h4>
+                  <p>{world.geography.climate.summary}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">资源分布</h4>
+                  <p>{world.geography.resources.summary}</p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
 
-        {/* 添加各个标签页的编辑表单 */}
-        <TabsContent value="geography">
-          <Card>
-            <CardHeader>
-              <CardTitle>地理环境</CardTitle>
-            </CardHeader>
-            <CardContent>{/* 添加地理相关的编辑表单 */}</CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* 添加其他标签页... */}
-      </Tabs>
+        {world.culture && (
+          <AccordionItem value="culture">
+            <AccordionTrigger>文明文化</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">文明概述</h4>
+                  <p>{world.culture.description}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">信仰</h4>
+                  <p>{world.culture.beliefs.join(", ")}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">习俗</h4>
+                  <p>{world.culture.customs.join(", ")}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">艺术</h4>
+                  <p>{world.culture.arts.join(", ")}</p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+      </Accordion>
     </div>
   );
-}
+};

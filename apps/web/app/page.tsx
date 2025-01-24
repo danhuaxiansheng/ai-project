@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { WorldGeneratorForm } from "@/components/world/WorldGeneratorForm";
 import { WorldPreview } from "@/components/world/WorldPreview";
 import { WorldList } from "@/components/world/WorldList";
-import { WorldData, worldApi } from "@/lib/api/world";
+import { worldApi } from "@/lib/api/world";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { World } from "@/lib/types";
 
 export default function Home() {
-  const [worldData, setWorldData] = useState<WorldData | null>(null);
+  const [worlds, setWorlds] = useState<World[]>([]);
+  const [selectedWorld, setSelectedWorld] = useState<World | null>(null);
   const [activeTab, setActiveTab] = useState("list");
+  const [loading, setLoading] = useState(true);
 
   // 保存表单状态
   const [formState, setFormState] = useState({
@@ -19,18 +22,36 @@ export default function Home() {
     focusAreas: [] as string[],
   });
 
-  const handleWorldSelect = async (worldId: string) => {
+  // 加载世界列表
+  const loadWorlds = async () => {
     try {
-      const data = await worldApi.getWorld("default_project", worldId);
-      setWorldData(data);
+      setLoading(true);
+      const response = await worldApi.listWorlds("default_project");
+      setWorlds(response.worlds || []);
+    } catch (error) {
+      console.error("Failed to load worlds:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadWorlds();
+  }, []);
+
+  const handleWorldSelect = async (world: World) => {
+    try {
+      const data = await worldApi.getWorld("default_project", world.id);
+      setSelectedWorld(data);
       setActiveTab("preview");
     } catch (error) {
       console.error("Failed to load world:", error);
     }
   };
 
-  const handleWorldGenerated = (data: WorldData) => {
-    setWorldData(data);
+  const handleWorldGenerated = (world: World) => {
+    setSelectedWorld(world);
+    setWorlds((prev) => [world, ...prev]); // 将新世界添加到列表开头
     setActiveTab("preview");
   };
 
@@ -42,13 +63,13 @@ export default function Home() {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="list">已有世界</TabsTrigger>
           <TabsTrigger value="create">创建新世界</TabsTrigger>
-          <TabsTrigger value="preview" disabled={!worldData}>
+          <TabsTrigger value="preview" disabled={!selectedWorld}>
             世界预览
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="list" className="mt-6">
-          <WorldList onSelect={handleWorldSelect} />
+          <WorldList worlds={worlds} onWorldSelect={handleWorldSelect} />
         </TabsContent>
 
         <TabsContent value="create" className="mt-6">
@@ -60,12 +81,10 @@ export default function Home() {
         </TabsContent>
 
         <TabsContent value="preview" className="mt-6">
-          {worldData && (
+          {selectedWorld && (
             <WorldPreview
-              data={worldData}
-              onUpdated={(updatedData) => {
-                setWorldData(updatedData);
-              }}
+              world={selectedWorld}
+              onClick={() => {}} // 可选的点击处理
             />
           )}
         </TabsContent>

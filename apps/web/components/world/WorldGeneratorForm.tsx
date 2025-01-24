@@ -17,6 +17,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { World } from "@/lib/types";
 
 const FOCUS_AREAS = [
   { value: "geography", label: "地理", description: "地形、气候、资源分布" },
@@ -27,7 +28,7 @@ const FOCUS_AREAS = [
 ];
 
 interface WorldGeneratorFormProps {
-  onGenerated: (data: WorldData) => void;
+  onGenerated: (world: World) => void;
   initialState?: {
     prompt: string;
     seed: string;
