@@ -56,11 +56,23 @@ virtual-world-generator/
 - SCSS Modules
 - Shadcn/ui
 
+## 系统要求
+
+- Python 3.10.12 或更高版本
+- Node.js 18+ (用于前端开发)
+- pnpm 8+
+
 ## 安装说明
 
 ### 后端设置
 
-1. 创建并激活 Python 虚拟环境：
+1. 确保安装了正确版本的 Python：
+
+```bash
+python --version  # 应该显示 3.10.12 或更高版本
+```
+
+2. 创建并激活虚拟环境：
 
 ```bash
 python -m venv venv
@@ -69,17 +81,11 @@ source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate     # Windows
 ```
 
-2. 安装后端依赖：
-
-```bash
-cd apps/generator
-pip install -r requirements.txt
-```
-
-如果安装过程中遇到问题，可以尝试先升级 pip：
+3. 升级 pip 并安装依赖：
 
 ```bash
 pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
 主要依赖说明：
