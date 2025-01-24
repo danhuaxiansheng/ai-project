@@ -32,13 +32,36 @@ def function_name(param: type) -> return_type:
 ```
 virtual-world-generator/
 ├── apps/
-│   └── generator/
-│       ├── core/           # 核心生成逻辑
-│       ├── data/           # 数据处理
-│       └── utils/          # 工具函数
-├── outputs/                # 生成结果
-│   └── [timestamp]/       # 每次生成的输出
-└── tests/                 # 测试文件
+│   ├── generator/         # Python 后端
+│   │   ├── core/         # 核心生成逻辑
+│   │   │   ├── world/    # 世界生成核心
+│   │   │   ├── geography/# 地理系统
+│   │   │   └── culture/  # 文明文化
+│   │   ├── data/         # 数据处理
+│   │   │   ├── models/   # 数据模型
+│   │   │   └── schemas/  # 数据模式
+│   │   ├── api/          # API 接口
+│   │   └── utils/        # 工具函数
+│   └── web/              # Next.js 前端
+│       ├── app/          # 页面路由
+│       │   ├── layout.tsx
+│       │   ├── page.tsx
+│       │   └── world/    # 世界相关页面
+│       ├── components/   # React 组件
+│       │   ├── ui/       # UI 基础组件
+│       │   └── world/    # 世界相关组件
+│       ├── lib/          # 工具函数
+│       │   ├── api/      # API 请求
+│       │   └── utils/    # 通用工具
+│       └── styles/       # 样式文件
+├── outputs/              # 生成结果
+│   └── [timestamp]/     # 每次生成的输出
+├── tests/               # 测试文件
+│   ├── unit/           # 单元测试
+│   └── integration/    # 集成测试
+└── docs/               # 项目文档
+    ├── api/            # API 文档
+    └── guides/         # 使用指南
 ```
 
 ## 输出规范
@@ -46,11 +69,20 @@ virtual-world-generator/
 ### 数据目录
 ```
 outputs/[timestamp]/
-├── world_config.json      # 配置
+├── world_config.json      # 世界配置
 ├── world_data/           # 核心数据
-│   ├── geography/        # 地理
-│   └── civilization/     # 文明
+│   ├── geography/        # 地理数据
+│   │   ├── terrain.json  # 地形数据
+│   │   ├── climate.json  # 气候数据
+│   │   └── resources.json# 资源分布
+│   └── civilization/     # 文明数据
+│       ├── cultures.json # 文化信息
+│       ├── nations.json  # 国家信息
+│       └── history.json  # 历史事件
 └── export/              # 导出文件
+    ├── maps/           # 地图文件
+    ├── documents/      # 文档文件
+    └── visualizations/ # 可视化文件
 ```
 
 ### 核心数据格式
@@ -124,29 +156,6 @@ except GenerationError as e:
 // SCSS Modules
 // Shadcn/ui 组件库
 ```
-
-### 目录结构
-```
-apps/web/
-├── app/                    # Next.js App Router
-│   ├── layout.tsx         # 根布局
-│   ├── page.tsx           # 首页
-│   └── world/             # 世界生成模块
-│       ├── create/        # 创建页面
-│       ├── [id]/          # 详情页面
-│       └── components/    # 页面组件
-├── components/            # 全局共享组件
-│   ├── ui/               # UI 基础组件
-│   └── world/            # 世界相关组件
-├── lib/                   # 工具函数
-│   ├── api/              # API 请求
-│   └── utils/            # 通用工具
-├── styles/               # 全局样式
-│   ├── globals.scss      # 全局 SCSS
-│   └── variables.scss    # SCSS 变量
-└── types/                # TypeScript 类型定义
-```
-
 ### 组件规范
 ```typescript
 // 组件命名：PascalCase

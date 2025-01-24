@@ -9,25 +9,46 @@ virtual-world-generator/
 ├── apps/
 │   ├── generator/         # Python 后端
 │   │   ├── core/         # 核心生成逻辑
+│   │   │   ├── world/    # 世界生成核心
+│   │   │   ├── geography/# 地理系统
+│   │   │   └── culture/  # 文明文化
 │   │   ├── data/         # 数据处理
+│   │   │   ├── models/   # 数据模型
+│   │   │   └── schemas/  # 数据模式
+│   │   ├── api/          # API 接口
 │   │   └── utils/        # 工具函数
 │   └── web/              # Next.js 前端
 │       ├── app/          # 页面路由
+│       │   ├── layout.tsx
+│       │   ├── page.tsx
+│       │   └── world/    # 世界相关页面
 │       ├── components/   # React 组件
+│       │   ├── ui/       # UI 基础组件
+│       │   └── world/    # 世界相关组件
 │       ├── lib/          # 工具函数
+│       │   ├── api/      # API 请求
+│       │   └── utils/    # 通用工具
 │       └── styles/       # 样式文件
 ├── outputs/              # 生成结果
-└── tests/               # 测试文件
+│   └── [timestamp]/     # 每次生成的输出
+├── tests/               # 测试文件
+│   ├── unit/           # 单元测试
+│   └── integration/    # 集成测试
+└── docs/               # 项目文档
+    ├── api/            # API 文档
+    └── guides/         # 使用指南
 ```
 
 ## 技术栈
 
 ### 后端
+
 - Python 3.8+
 - FastAPI
 - SQLAlchemy
 
 ### 前端
+
 - Next.js 13+ (App Router)
 - React 18+
 - TypeScript 5+
@@ -40,6 +61,7 @@ virtual-world-generator/
 ### 后端设置
 
 1. 创建并激活 Python 虚拟环境：
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
@@ -48,6 +70,7 @@ venv\Scripts\activate     # Windows
 ```
 
 2. 安装后端依赖：
+
 ```bash
 cd apps/generator
 pip install -r requirements.txt
@@ -58,6 +81,7 @@ pip install -r requirements.txt
 1. 安装 Node.js (18+) 和 pnpm
 
 2. 安装前端依赖：
+
 ```bash
 cd apps/web
 pnpm install
@@ -108,11 +132,13 @@ pnpm start  # 运行生产环境
 ## 开发指南
 
 ### 代码规范
+
 - 使用 ESLint 和 Prettier 进行代码格式化
 - 遵循 TypeScript 类型定义
 - 使用 SCSS Modules 和 Tailwind 管理样式
 
 ### 提交规范
+
 - feat: 新功能
 - fix: 修复问题
 - docs: 文档更新
