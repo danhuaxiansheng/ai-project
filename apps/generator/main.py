@@ -1178,12 +1178,13 @@ async def list_worlds(project_name: str):
             file_storage.base_path, project_name, "project_index.json"
         )
         if not os.path.exists(index_path):
-            return {"worlds": []}
+            return {"worlds": []}  # 返回空列表
 
         with open(index_path, "r", encoding="utf-8") as f:
             index_data = json.load(f)
 
-        return {"worlds": index_data.get("worlds", {})}
+        worlds = index_data.get("worlds", [])  # 默认返回空列表
+        return {"worlds": worlds}
 
     except Exception as e:
         logger.error(f"Error listing worlds: {str(e)}")
