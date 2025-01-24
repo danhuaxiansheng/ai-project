@@ -76,6 +76,19 @@ cd apps/generator
 pip install -r requirements.txt
 ```
 
+如果安装过程中遇到问题，可以尝试先升级 pip：
+
+```bash
+pip install --upgrade pip
+```
+
+主要依赖说明：
+
+- FastAPI: Web 框架
+- SQLAlchemy: 数据库 ORM
+- jieba: 中文分词
+- numpy/pandas: 数据处理
+
 ### 前端设置
 
 1. 安装 Node.js (18+) 和 pnpm
