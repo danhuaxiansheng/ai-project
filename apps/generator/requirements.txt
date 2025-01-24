@@ -4,10 +4,20 @@ uvicorn>=0.15.0
 starlette>=0.27.0
 python-multipart>=0.0.5
 
-# 工具库
-python-dotenv>=0.19.0
-pydantic>=2.0.0  # 使用 V2 版本
+# AI 和 NLP
+openai>=1.0.0
 jieba>=0.42.1
+
+# 数据处理
 numpy>=1.21.0
-openai>=1.0.0  # OpenAI API
-httpx>=0.24.0  # 异步 HTTP 客户端
+pydantic>=2.0.0
+
+# 工具库
+python-dotenv==1.0.0
+tenacity>=8.0.1
+python-json-logger>=2.0.7
+httpx>=0.24.0
+
+# 测试
+pytest>=7.0.0
+pytest-asyncio>=0.18.0

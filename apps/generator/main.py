@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, field_validator
 from typing import List, Optional, Dict
@@ -7,35 +7,42 @@ from datetime import datetime
 import jieba
 import random
 import jieba.analyse
+from fastapi.responses import JSONResponse
+import json
 
 from virtual_world_generator import VirtualWorldGenerator
 from utils.file_storage import FileStorage
+from utils.ai_service import AIService
+from utils.logger import setup_logger
 
 # 配置日志
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+setup_logger()
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="虚拟世界生成器 API")
 
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """全局异常处理"""
+    logger.error(f"全局异常: {str(exc)}")
+    return JSONResponse(
+        status_code=500, content={"message": "服务器内部错误", "detail": str(exc)}
+    )
+
+
 # 更新 CORS 配置
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-    ],
+    allow_origins=["*"],  # 在生产环境中应该限制来源
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
 )
 
-# 初始化文件存储
+# 初始化服务
 file_storage = FileStorage()
+ai_service = AIService()
 
 
 class WorldGenerationParams(BaseModel):
@@ -66,7 +73,7 @@ class WorldGenerationParams(BaseModel):
 @app.post("/api/generate")
 async def generate_world(params: WorldGenerationParams):
     try:
-        logger.info(f"Received generation request with params: {params}")
+        logger.info(f"Received generation request")
 
         # 创建生成器实例并生成世界
         generator = VirtualWorldGenerator(
@@ -78,12 +85,19 @@ async def generate_world(params: WorldGenerationParams):
 
         world_data = await generator.generate_world()
 
-        # 保存世界数据
-        storage = FileStorage()
-        world_id = storage.save_world(
-            world_data, params.project_name or "default_project"
-        )
-        world_data["id"] = world_id
+        # 保存世界数据到文件
+        try:
+            storage = FileStorage()
+            world_id = storage.save_world(
+                world_data["data"], params.project_name or "default_project"
+            )
+            # 将 ID 添加到数据中
+            world_data["data"]["id"] = world_id
+            logger.info(f"Saved world data with ID: {world_id}")
+        except Exception as e:
+            logger.error(f"Error saving world data: {str(e)}")
+            # 即使保存失败也继续返回生成的数据
+            world_data["message"] = "世界生成成功，但保存失败"
 
         return world_data
 
@@ -96,6 +110,35 @@ async def generate_world(params: WorldGenerationParams):
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+
+@app.get("/health")
+async def health_check():
+    """健康检查端点"""
+    try:
+        api_status = await check_api_status()
+        return {
+            "status": "healthy",
+            "api_status": api_status,
+            "timestamp": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"健康检查失败: {str(e)}")
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat(),
+        }
+
+
+async def check_api_status():
+    """检查 DeepSeek API 状态"""
+    try:
+        await ai_service.generate_text("test", max_tokens=10)
+        return "available"
+    except Exception as e:
+        logger.error(f"API 状态检查失败: {str(e)}")
+        return "unavailable"
 
 
 @app.get("/api/worlds/{project_name}")

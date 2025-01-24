@@ -33,15 +33,11 @@ def function_name(param: type) -> return_type:
 virtual-world-generator/
 ├── apps/
 │   ├── generator/         # Python 后端
+│   │   ├── data/         # 数据存储
+│   │   │   └── worlds/   # 世界数据
 │   │   ├── core/         # 核心生成逻辑
-│   │   │   ├── world/    # 世界生成核心
-│   │   │   ├── geography/# 地理系统
-│   │   │   └── culture/  # 文明文化
-│   │   ├── data/         # 数据处理
-│   │   │   ├── models/   # 数据模型
-│   │   │   └── schemas/  # 数据模式
-│   │   ├── api/          # API 接口
-│   │   └── utils/        # 工具函数
+│   │   ├── utils/        # 工具函数
+│   │   └── ...
 │   └── web/              # Next.js 前端
 │       ├── app/          # 页面路由
 │       │   ├── layout.tsx

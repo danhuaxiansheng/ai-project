@@ -8,15 +8,11 @@
 virtual-world-generator/
 ├── apps/
 │   ├── generator/         # Python 后端
+│   │   ├── data/         # 数据存储
+│   │   │   └── worlds/   # 世界数据
 │   │   ├── core/         # 核心生成逻辑
-│   │   │   ├── world/    # 世界生成核心
-│   │   │   ├── geography/# 地理系统
-│   │   │   └── culture/  # 文明文化
-│   │   ├── data/         # 数据处理
-│   │   │   ├── models/   # 数据模型
-│   │   │   └── schemas/  # 数据模式
-│   │   ├── api/          # API 接口
-│   │   └── utils/        # 工具函数
+│   │   ├── utils/        # 工具函数
+│   │   └── ...
 │   └── web/              # Next.js 前端
 │       ├── app/          # 页面路由
 │       │   ├── layout.tsx
@@ -171,6 +167,7 @@ pnpm start  # 运行生产环境
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+DEEPSEEK_API_KEY=your_deepseek_api_key    # Deepseek API密钥
 ```
 
 ## 注意事项

@@ -14,20 +14,36 @@ logger = logging.getLogger(__name__)
 
 
 class VirtualWorldGenerator:
-    """虚拟世界生成器核心类"""
+    """虚拟世界生成器"""
 
     def __init__(
         self,
-        seed: str = "",
-        complexity: int = 1,
+        seed: Optional[str] = None,
+        complexity: int = 5,
         focus_areas: Optional[List[str]] = None,
-        additional_params: Optional[Dict[str, Any]] = None,
+        additional_params: Optional[Dict] = None,
     ):
-        self.seed = seed
-        self.complexity = max(1, min(complexity, 10))
-        self.focus_areas = focus_areas or []
+        """
+        初始化虚拟世界生成器
+
+        Args:
+            seed: 随机种子
+            complexity: 复杂度 (1-10)
+            focus_areas: 重点关注领域
+            additional_params: 其他参数
+        """
+        self.seed = seed or f"world-{random.randint(1000, 9999)}"
+        self.complexity = min(max(complexity, 1), 10)  # 确保在1-10范围内
+        self.focus_areas = focus_areas or ["geography", "civilization", "culture"]
         self.additional_params = additional_params or {}
-        self.random = random.Random(seed) if seed else random.Random()
+
+        # 初始化随机数生成器
+        self.random = random.Random(self.seed)
+
+        # 初始化 AI 服务
+        self.ai_service = AIService()
+
+        logger.info(f"初始化世界生成器: seed={self.seed}, complexity={self.complexity}")
 
         # 初始化jieba分词
         jieba.initialize()
@@ -56,9 +72,6 @@ class VirtualWorldGenerator:
             "能源": ["太阳能", "风能", "水能", "魔力源"],
         }
 
-        # 初始化 AI 服务
-        self.ai_service = AIService(service_type=os.getenv("AI_SERVICE_TYPE", "openai"))
-
         # 添加提示模板
         self.prompts = {
             "origin": "这个世界的起源是：{context}",
@@ -66,30 +79,103 @@ class VirtualWorldGenerator:
             "development": "文明的发展历程是：{context}",
         }
 
-    async def generate_world(self) -> Dict[str, Any]:
-        """生成完整的虚拟世界"""
+    async def generate_world(self) -> Dict:
+        """
+        生成完整的虚拟世界
+
+        Returns:
+            包含世界信息的字典
+        """
         try:
-            world_data = {
-                "seed": self.seed,
-                "complexity": self.complexity,
-                "metadata": {
-                    "created_at": datetime.now().isoformat(),
-                    "focus_areas": self.focus_areas,
-                    "prompt": self.additional_params.get("prompt", ""),
+            # 获取用户输入的提示词
+            prompt = self.additional_params.get("prompt", "")
+
+            # 生成世界基础描述
+            world_description = await self.ai_service.generate_world_description(
+                f"""基于以下提示词创建一个独特的虚拟世界背景:
+                提示词: {prompt}
+                复杂度: {self.complexity}
+                重点领域: {', '.join(self.focus_areas)}
+                """
+            )
+            logger.info(f"生成的世界描述")
+
+            # 生成地理信息
+            geography_data = await self.ai_service.generate_geography(world_description)
+            logger.info(f"生成的地理信息")
+
+            # 生成地形数据
+            terrain_data = self._identify_terrain_types()
+            climate_data = self._generate_climate_zones()
+            resource_data = self._generate_resources()
+
+            # 解析地理信息为结构化数据
+            geography = {
+                "description": geography_data,
+                "terrain": terrain_data,
+                "climate": {
+                    "zones": climate_data,
+                    "summary": "多样的气候带",
                 },
-                "content": {
-                    "geography": await self._generate_geography(),
-                    "culture": await self._generate_cultural_elements(),
-                    "history": await self._generate_history(),
-                    "religion": await self._generate_religion(),
-                    "civilization": await self._generate_civilizations(),
+                "resources": {
+                    "items": resource_data,
+                    "summary": "丰富的自然资源",
                 },
             }
+
+            # 生成文明文化
+            culture_data = await self.ai_service.generate_culture(
+                world_description, geography_data
+            )
+            logger.info(f"生成的文明文化")
+
+            # 生成文明相关数据
+            civilization_data = self._generate_civilizations()
+            belief_data = self._generate_beliefs()
+            custom_data = self._generate_customs()
+            art_data = self._generate_arts()
+            social_data = self._generate_social_structure()
+
+            # 解析文明文化为结构化数据
+            culture = {
+                "description": culture_data,
+                "civilization": civilization_data,
+                "beliefs": belief_data,
+                "customs": custom_data,
+                "arts": art_data,
+                "social_structure": social_data,
+            }
+
+            # 整合所有信息
+            world_data = {
+                "success": True,
+                "data": {
+                    "id": None,  # 将由存储系统设置
+                    "seed": self.seed,
+                    "complexity": self.complexity,
+                    "focus_areas": self.focus_areas,
+                    "description": world_description,
+                    "geography": geography,
+                    "culture": culture,
+                    "metadata": {
+                        "generated_at": str(datetime.now()),
+                        "version": "1.0",
+                        "prompt": prompt,
+                    },
+                },
+                "message": "世界生成成功",
+            }
+
+            # 记录生成的数据结构
+            logger.info(
+                f"生成的世界数据结构: {json.dumps(world_data, ensure_ascii=False, indent=2)}"
+            )
 
             return world_data
 
         except Exception as e:
-            logger.error(f"生成世界时发生错误: {str(e)}")
+            logger.error(f"生成世界失败: {str(e)}")
+            logger.exception("详细错误信息：")
             raise
 
     def process_input(self, user_input: str) -> Dict:
@@ -228,14 +314,29 @@ class VirtualWorldGenerator:
 
         return timeline
 
-    def _identify_terrain_types(self) -> List[Dict]:
+    def _identify_terrain_types(self) -> Dict[str, Any]:
         """识别地形类型"""
-        terrain_types = ["山地", "平原", "水域", "森林", "沙漠"]
+        terrain_types = [
+            {"name": "山地", "description": "高耸的山脉绵延不绝"},
+            {"name": "平原", "description": "广阔的平原一望无际"},
+            {"name": "水域", "description": "清澈的水域点缀其中"},
+            {"name": "森林", "description": "茂密的森林覆盖大地"},
+            {"name": "沙漠", "description": "荒芜的沙漠延伸至远方"},
+        ]
+
         selected_terrains = self.random.sample(
             terrain_types, k=self.random.randint(2, min(4, self.complexity + 1))
         )
 
-        return [{"type": terrain} for terrain in selected_terrains]
+        # 将地形信息格式化为字符串
+        terrain_text = "、".join([t["name"] for t in selected_terrains])
+        terrain_descriptions = "\n".join([t["description"] for t in selected_terrains])
+
+        return {
+            "types": selected_terrains,
+            "summary": terrain_text,
+            "description": terrain_descriptions,
+        }
 
     def _generate_climate_zones(self) -> List[Dict]:
         """生成气候区域"""
@@ -277,63 +378,62 @@ class VirtualWorldGenerator:
 
         return resources
 
-    def _generate_civilizations(self) -> List[Dict]:
+    def _generate_civilizations(self) -> Dict[str, Any]:
         """生成文明信息"""
-        civilization_types = [
-            "农耕文明",
-            "游牧文明",
-            "海洋文明",
-            "魔法文明",
-            "科技文明",
-            "混合文明",
+        # 定义可能的技术水平
+        tech_levels = [
+            {"name": "原始", "description": "使用简单的石器工具"},
+            {"name": "农耕", "description": "发展出农业和畜牧"},
+            {"name": "青铜", "description": "掌握了金属冶炼技术"},
+            {"name": "工业", "description": "开始机械化生产"},
+            {"name": "信息", "description": "发展出先进的通信技术"},
+            {"name": "魔法", "description": "掌握了神秘的魔法力量"},
         ]
 
-        civilizations = []
-        # 生成2-3个文明
-        num_civs = np.random.randint(2, 4)
+        # 根据复杂度选择技术水平
+        tech_level = self.random.choice(tech_levels[: max(2, self.complexity)])
 
-        for _ in range(num_civs):
-            civ_type = np.random.choice(civilization_types)
-            civilizations.append(
-                {
-                    "type": civ_type,
-                    "name": self._generate_civilization_name(),
-                    "characteristics": self._generate_civilization_traits(civ_type),
-                    "development_level": np.random.choice(
-                        ["初级", "发展中", "高度发达"], p=[0.2, 0.5, 0.3]
-                    ),
-                }
-            )
+        # 生成文明特征
+        civilization_types = [
+            "游牧文明",
+            "农耕文明",
+            "海洋文明",
+            "山地文明",
+            "森林文明",
+            "沙漠文明",
+            "魔法文明",
+            "科技文明",
+        ]
 
-        return civilizations
+        # 选择文明类型
+        civ_type = self.random.choice(civilization_types)
 
-    def _generate_civilization_name(self) -> str:
-        """生成文明名称"""
-        prefixes = ["星", "云", "风", "光", "雷", "海"]
-        suffixes = ["族", "国", "邦", "联盟", "帝国"]
-        return f"{np.random.choice(prefixes)}{np.random.choice(suffixes)}"
+        # 生成发展阶段
+        development_stages = [
+            "萌芽期",
+            "成长期",
+            "鼎盛期",
+            "转型期",
+            "衰退期",
+            "复兴期",
+        ]
+        current_stage = self.random.choice(development_stages)
 
-    def _generate_civilization_traits(self, civ_type: str) -> List[str]:
-        """生成文明特征"""
-        traits_map = {
-            "农耕文明": ["重视农业", "崇尚和平", "注重教育"],
-            "游牧文明": ["擅长骑术", "适应能力强", "部落制度"],
-            "海洋文明": ["航海技术", "贸易发达", "探索精神"],
-            "魔法文明": ["魔法研究", "神秘主义", "等级制度"],
-            "科技文明": ["科技创新", "理性思维", "工业发展"],
-            "混合文明": ["多元文化", "包容开放", "创新融合"],
-        }
-
-        base_traits = traits_map.get(civ_type, ["适应环境", "文化传承", "社会发展"])
-        return np.random.choice(base_traits, size=2, replace=False).tolist()
-
-    def _generate_cultural_elements(self) -> Dict:
-        """生成文化元素"""
         return {
-            "beliefs": self._generate_beliefs(),
-            "customs": self._generate_customs(),
-            "arts": self._generate_arts(),
-            "social_structure": self._generate_social_structure(),
+            "type": civ_type,
+            "technology": tech_level,
+            "development_stage": current_stage,
+            "characteristics": [
+                "独特的" + civ_type,
+                f"{tech_level['name']}级技术水平",
+                f"处于{current_stage}",
+            ],
+            "description": (
+                f"这是一个{civ_type}，"
+                f"已经发展出{tech_level['name']}级技术水平，"
+                f"{tech_level['description']}。"
+                f"目前正处于{current_stage}。"
+            ),
         }
 
     def _generate_beliefs(self) -> List[str]:
