@@ -1,22 +1,13 @@
 # Web 框架
-fastapi>=0.104.0  # 支持 Python 3.10+
-uvicorn>=0.24.0
-starlette>=0.27.0  # 更新 starlette 版本
-python-multipart>=0.0.6  # 用于处理文件上传
-python-jose[cryptography]>=3.3.0  # 用于 JWT
-passlib[bcrypt]>=1.7.4  # 用于密码哈希
-
-# 数据库
-sqlalchemy>=2.0.0  # 支持 Python 3.10+
-alembic>=1.12.0
+fastapi>=0.68.0
+uvicorn>=0.15.0
+starlette>=0.27.0
+python-multipart>=0.0.5
 
 # 工具库
-python-dotenv>=1.0.0
-pydantic>=2.0.0  # 支持 Python 3.10+
-jieba>=0.42.1  # 中文分词
-numpy>=1.24.0  # 支持 Python 3.10+
-pandas>=2.0.0  # 支持 Python 3.10+
-
-# 测试
-pytest>=7.4.0
-pytest-cov>=4.1.0 
+python-dotenv>=0.19.0
+pydantic>=2.0.0  # 使用 V2 版本
+jieba>=0.42.1
+numpy>=1.21.0
+openai>=1.0.0  # OpenAI API
+httpx>=0.24.0  # 异步 HTTP 客户端
