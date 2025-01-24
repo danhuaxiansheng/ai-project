@@ -1,8 +1,12 @@
 {
-  "projects": {
-    "default_project": {
-      "created_at": "20250123_222144",
-      "worlds": []
+  "version": "1.0",
+  "worlds": [
+    {
+      "id": "default_world",
+      "name": "默认世界",
+      "description": "这是一个基础的虚拟世界模板",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
     }
-  }
+  ]
 }

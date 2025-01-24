@@ -1,3 +1,13 @@
 {
-  "worlds": {}
+  "version": "1.0",
+  "project_id": "default_project",
+  "name": "默认项目",
+  "description": "这是一个基础的项目模板",
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z",
+  "worlds": ["default_world"],
+  "settings": {
+    "language": "zh-CN",
+    "theme": "default"
+  }
 }

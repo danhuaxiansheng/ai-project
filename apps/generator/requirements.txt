@@ -1,6 +1,10 @@
 # Web 框架
 fastapi>=0.68.0
 uvicorn>=0.15.0
+starlette>=0.14.2  # 添加 starlette 依赖
+python-multipart>=0.0.5  # 用于处理文件上传
+python-jose[cryptography]>=3.3.0  # 用于 JWT
+passlib[bcrypt]>=1.7.4  # 用于密码哈希
 
 # 数据库
 sqlalchemy>=1.4.0

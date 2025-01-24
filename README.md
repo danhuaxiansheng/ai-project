@@ -181,3 +181,25 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## 贡献指南
 
 [添加贡献指南]
+
+## 初始化说明
+
+首次运行时，系统会自动创建以下文件：
+
+1. `apps/novel/worlds_index.json`: 世界索引文件
+2. `apps/novel/default_project/`: 默认项目目录
+   - `project_index.json`: 项目配置文件
+   - `worlds/`: 世界数据目录
+
+如果遇到 "无法加载响应数据" 错误，请检查：
+
+1. 确保以上文件存在且格式正确
+2. 文件权限设置正确
+3. 数据文件是有效的 JSON 格式
+
+可以通过以下命令初始化项目：
+
+```bash
+cd apps/generator
+python init_project.py
+```
