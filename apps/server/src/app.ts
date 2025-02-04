@@ -4,10 +4,10 @@ import dotenv from "dotenv";
 import { novelRoutes } from "./routes/novel";
 import { roleRoutes } from "./routes/role";
 import { chapterRoutes } from "./routes/chapter";
+import { taskRoutes } from "./routes/task";
 import { errorHandler } from "./middleware/error";
 import logger from "./utils/logger";
 import { initStorage } from "./services/storage";
-import { taskRoutes } from "./routes/task";
 
 dotenv.config();
 

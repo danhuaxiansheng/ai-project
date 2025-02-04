@@ -1,58 +1,42 @@
 "use client";
 
-import { useGlobalMonitor } from "@/lib/hooks/useGlobalMonitor";
-import { Role, RoleStatus } from "@/types/role";
+import { Role } from "@/types/role";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
 interface RoleMonitorProps {
   role: Role;
-  onSelect: (role: Role) => void;
 }
 
-const statusColors = {
-  idle: "bg-gray-400",
-  working: "bg-green-500",
-  paused: "bg-yellow-500",
-  error: "bg-red-500",
-};
-
-export function RoleMonitor({ role, onSelect }: RoleMonitorProps) {
-  const { tasks } = useGlobalMonitor();
-  const currentTask = tasks.find((t) => t.id === role.currentTask);
+export function RoleMonitor({ role }: RoleMonitorProps) {
+  const { settings } = role;
 
   return (
-    <Card
-      className="hover:shadow-lg transition-shadow cursor-pointer"
-      onClick={() => onSelect(role)}
-    >
+    <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>{role.name}</CardTitle>
-          <Badge className={statusColors[role.status]}>{role.status}</Badge>
-        </div>
+        <CardTitle>{role.name}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span>当前任务:</span>
-            <span>{currentTask?.type || "无"}</span>
+            <span>创造力</span>
+            <span>{settings.creativity}%</span>
           </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>创造力</span>
-              <span>{role.settings.creativity}%</span>
-            </div>
-            <Progress value={role.settings.creativity} />
+          <Progress value={settings.creativity} />
+        </div>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>严谨度</span>
+            <span>{settings.strictness}%</span>
           </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>严格度</span>
-              <span>{role.settings.strictness}%</span>
-            </div>
-            <Progress value={role.settings.strictness} />
+          <Progress value={settings.strictness} />
+        </div>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>响应速度</span>
+            <span>{settings.speed}%</span>
           </div>
+          <Progress value={settings.speed} />
         </div>
       </CardContent>
     </Card>

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { NovelService } from "../services/novel";
 import { NotFoundError } from "../utils/errors";
+import { Novel } from "../models/novel";
 
 export class NovelController {
   private service = new NovelService();

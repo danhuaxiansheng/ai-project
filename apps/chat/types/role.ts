@@ -16,3 +16,11 @@ export interface Role {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface RoleAdjustment {
+  creativity?: number;
+  strictness?: number;
+  speed?: number;
+  style?: string[];
+  constraints?: string[];
+}
