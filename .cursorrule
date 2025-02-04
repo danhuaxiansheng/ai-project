@@ -1,20 +1,24 @@
-# 虚拟世界生成器开发规范
+# AI小说创作系统开发规范
 
-## 核心职责
-- 代码开发和优化
-- 架构设计
-- 问题诊断和修复
-- 文档维护
+## 核心定位
+- 面向起点中文网
+- 目标读者：18-40岁男性
+- 创作风格：金庸笔法结合网文特色
 
-## 基础规范
+## 开发原则
 
-### 注释规范
+### 创作系统设计
+- 确保多角色协同效率
+- 保持创作质量稳定
+- 适应市场需求变化
+
+### 代码规范
 ```python
 """[模块名]
 [简要说明]
 
-作者：[名字]
-日期：[YYYY-MM-DD]
+用途：小说创作系统
+目标：提供高质量的网文创作支持
 """
 
 def function_name(param: type) -> return_type:
@@ -30,249 +34,58 @@ def function_name(param: type) -> return_type:
 
 ## 项目结构
 ```
-virtual-world-generator/
+ai-novel-system/
 ├── apps/
-│   ├── generator/         # Python 后端
-│   │   ├── data/         # 数据存储
-│   │   │   └── worlds/   # 世界数据
-│   │   ├── core/         # 核心生成逻辑
-│   │   ├── utils/        # 工具函数
-│   │   └── ...
-│   └── web/              # Next.js 前端
-│       ├── app/          # 页面路由
-│       │   ├── layout.tsx
-│       │   ├── page.tsx
-│       │   └── world/    # 世界相关页面
-│       ├── components/   # React 组件
-│       │   ├── ui/       # UI 基础组件
-│       │   └── world/    # 世界相关组件
-│       ├── lib/          # 工具函数
-│       │   ├── api/      # API 请求
-│       │   └── utils/    # 通用工具
-│       └── styles/       # 样式文件
-├── outputs/              # 生成结果
-│   └── [timestamp]/     # 每次生成的输出
-├── tests/               # 测试文件
-│   ├── unit/           # 单元测试
-│   └── integration/    # 集成测试
-└── docs/               # 项目文档
-    ├── api/            # API 文档
-    └── guides/         # 使用指南
+│   ├── generator/       # 创作核心逻辑
+│   └── web/            # 创作管理界面
+├── outputs/            # 小说输出
+└── docs/              # 文档
 ```
 
 ## 输出规范
 
-### 数据目录
+### 小说数据结构
 ```
-outputs/[timestamp]/
-├── world_config.json      # 世界配置
-├── world_data/           # 核心数据
-│   ├── geography/        # 地理数据
-│   │   ├── terrain.json  # 地形数据
-│   │   ├── climate.json  # 气候数据
-│   │   └── resources.json# 资源分布
-│   └── civilization/     # 文明数据
-│       ├── cultures.json # 文化信息
-│       ├── nations.json  # 国家信息
-│       └── history.json  # 历史事件
-└── export/              # 导出文件
-    ├── maps/           # 地图文件
-    ├── documents/      # 文档文件
-    └── visualizations/ # 可视化文件
+novel/
+├── meta.json          # 元数据
+├── chapters/          # 章节内容
+├── settings/         # 设定文档
+├── reviews/         # 审核评分
+└── analytics/      # 数据分析
 ```
 
 ### 核心数据格式
 ```json
 {
     "version": "1.0.0",
-    "timestamp": "YYYY-MM-DD HH:MM:SS",
-    "generator_settings": {
-        "seed": "string",
-        "complexity": "int",
-        "focus_areas": ["string"]
+    "novel_info": {
+        "title": "string",
+        "author": "string",
+        "type": "string",
+        "target_length": "int"
     },
-    "world_data": {
-        "geography": {},
-        "civilization": {},
-        "history": []
+    "creation_settings": {
+        "style": "金庸风格",
+        "target_readers": "18-40岁男性",
+        "platform": "起点中文网"
     }
 }
 ```
 
 ## 开发流程
 
-### 新功能开发
-1. 确认需求和接口
-2. 编写核心代码
-3. 添加单元测试
-4. 更新文档
+### 功能开发
+1. 符合网文创作需求
+2. 保证创作质量
+3. 优化用户体验
 
-### 问题修复
-1. 复现问题
-2. 定位原因
-3. 修复并测试
-4. 补充测试用例
+### 质量控制
+1. 创作质量检查
+2. 市场反馈分析
+3. 持续优化改进
 
-## 异常处理
-```python
-try:
-    result = generate_world(params)
-except (ConfigError, ValueError) as e:
-    logger.error(f"配置错误: {e}")
-    raise
-except GenerationError as e:
-    logger.error(f"生成错误: {e}")
-    raise
-```
-
-## 性能要求
-- 生成响应时间 < 5s
-- 内存占用 < 1GB
-- 测试覆盖率 > 80%
-
-## 工具链
-- 代码格式化：black
-- 类型检查：mypy
-- 测试框架：pytest
-- 文档生成：sphinx
-
-## Git 工作流
-- 功能分支：feature/*
-- 修复分支：bugfix/*
-- 提交格式：[类型] 简要说明 
-
-## 前端开发规范
-
-### 技术栈规范
-```typescript
-// Next.js 13+ App Router
-// React 18+
-// TypeScript 5+
-// Tailwind CSS 3+
-// SCSS Modules
-// Shadcn/ui 组件库
-```
-### 组件规范
-```typescript
-// 组件命名：PascalCase
-// components/world/WorldGenerator.tsx
-import { useState } from 'react'
-import styles from './WorldGenerator.module.scss'
-
-interface WorldGeneratorProps {
-  onGenerate: (params: WorldParams) => Promise<void>
-}
-
-export function WorldGenerator({ onGenerate }: WorldGeneratorProps) {
-  // 组件逻辑
-}
-```
-
-### 样式规范
-```scss
-// SCSS 模块化命名
-.container {
-  @apply flex flex-col gap-4;  // 优先使用 Tailwind
-  
-  .header {
-    // 自定义样式
-    &__title {
-      // BEM 命名规范
-    }
-  }
-}
-```
-
-### API 调用规范
-```typescript
-// lib/api/world.ts
-export async function generateWorld(params: WorldParams): Promise<WorldData> {
-  const response = await fetch('/api/world/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
-  })
-  
-  if (!response.ok) {
-    throw new Error('生成失败')
-  }
-  
-  return response.json()
-}
-```
-
-### 状态管理
-```typescript
-// 使用 React Context 或 Zustand
-interface WorldStore {
-  currentWorld: WorldData | null
-  setWorld: (world: WorldData) => void
-  clearWorld: () => void
-}
-```
-
-### 类型定义
-```typescript
-// types/world.d.ts
-interface WorldParams {
-  seed?: string
-  complexity: number
-  focusAreas: string[]
-  // ...其他参数
-}
-
-interface WorldData {
-  id: string
-  version: string
-  timestamp: string
-  data: {
-    geography: Geography
-    civilization: Civilization
-    history: HistoryEvent[]
-  }
-}
-```
-
-### 错误处理
-```typescript
-try {
-  const world = await generateWorld(params)
-  setWorld(world)
-} catch (error) {
-  toast.error('世界生成失败')
-  console.error(error)
-}
-```
-
-### 组件交互流程
-1. 参数输入
-   - 表单验证
-   - 实时预览
-   - 参数保存
-
-2. 生成过程
-   - 加载状态
-   - 进度显示
-   - 取消操作
-
-3. 结果展示
-   - 数据可视化
-   - 导出选项
-   - 分享功能
-
-### 性能优化
-- 组件懒加载
-- 图片优化
-- API 缓存
-- 防抖节流
-
-### 开发工具
-- ESLint + Prettier
-- Husky + lint-staged
-- Storybook
-- Jest + React Testing Library
-
-### 部署规范
-- 环境变量配置
-- 构建优化
-- CI/CD 流程 
+## 特别注意
+- 严格遵守起点规范
+- 注重作品质量
+- 关注市场反馈
+- 保持更新稳定
