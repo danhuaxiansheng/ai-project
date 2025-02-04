@@ -101,6 +101,14 @@ export function NovelList() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-32">
+        <p>加载中...</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="space-y-4">
@@ -111,64 +119,70 @@ export function NovelList() {
             新建小说
           </Button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {novels.map((novel) => (
-            <Card key={novel.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{novel.title}</CardTitle>
-                  <Badge variant={statusConfig[novel.status].variant}>
-                    {statusConfig[novel.status].label}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600 line-clamp-2">
-                    {novel.description}
-                  </p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>进度</span>
-                      <span>
-                        {novel.currentChapter}/{novel.totalChapters} 章
-                      </span>
+        {novels.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">暂无小说，点击右上角按钮创建新小说</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {novels.map((novel) => (
+              <Card key={novel.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-lg">{novel.title}</CardTitle>
+                    <Badge variant={statusConfig[novel.status].variant}>
+                      {statusConfig[novel.status].label}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                      {novel.description}
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>进度</span>
+                        <span>
+                          {novel.currentChapter}/{novel.totalChapters} 章
+                        </span>
+                      </div>
+                      <Progress value={novel.progress} />
                     </div>
-                    <Progress value={novel.progress} />
+                    <div className="flex flex-wrap gap-2">
+                      {novel.settings.genre.map((genre) => (
+                        <Badge key={genre} variant="outline">
+                          {genre}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      {novel.status === "creating" ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePause(novel)}
+                        >
+                          <PauseIcon className="w-4 h-4 mr-2" />
+                          暂停
+                        </Button>
+                      ) : novel.status !== "completed" ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStart(novel)}
+                        >
+                          <PlayIcon className="w-4 h-4 mr-2" />
+                          开始创作
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {novel.settings.genre.map((genre) => (
-                      <Badge key={genre} variant="outline">
-                        {genre}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    {novel.status === "creating" ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePause(novel)}
-                      >
-                        <PauseIcon className="w-4 h-4 mr-2" />
-                        暂停
-                      </Button>
-                    ) : novel.status !== "completed" ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleStart(novel)}
-                      >
-                        <PlayIcon className="w-4 h-4 mr-2" />
-                        开始创作
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
       <NovelForm open={showForm} onClose={handleFormClose} />
     </>

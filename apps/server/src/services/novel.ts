@@ -1,8 +1,14 @@
-import { Novel, NovelModel } from "../models/Novel";
+import { Novel, NovelModel } from "../models/novel";
 
 export class NovelService {
   public async getAllNovels(): Promise<Novel[]> {
-    return NovelModel.find().sort({ updatedAt: -1 });
+    try {
+      const novels = await NovelModel.find().sort({ updatedAt: -1 });
+      return novels || [];
+    } catch (error) {
+      console.error("获取小说列表失败:", error);
+      return [];
+    }
   }
 
   public async getNovelById(id: string): Promise<Novel | null> {

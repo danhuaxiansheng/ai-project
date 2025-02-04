@@ -1,28 +1,21 @@
 import { Request, Response } from "express";
 import { NovelService } from "../services/novel";
+import { NotFoundError } from "../utils/errors";
 
 export class NovelController {
   private service = new NovelService();
 
   public getAllNovels = async (req: Request, res: Response) => {
-    try {
-      const novels = await this.service.getAllNovels();
-      res.json(novels);
-    } catch (error) {
-      res.status(500).json({ error: "获取小说列表失败" });
-    }
+    const novels = await this.service.getAllNovels();
+    res.json(novels || []);
   };
 
   public getNovelById = async (req: Request, res: Response) => {
-    try {
-      const novel = await this.service.getNovelById(req.params.id);
-      if (!novel) {
-        return res.status(404).json({ error: "小说不存在" });
-      }
-      res.json(novel);
-    } catch (error) {
-      res.status(500).json({ error: "获取小说详情失败" });
+    const novel = await this.service.getNovelById(req.params.id);
+    if (!novel) {
+      throw new NotFoundError("小说不存在");
     }
+    res.json(novel);
   };
 
   public createNovel = async (req: Request, res: Response) => {
