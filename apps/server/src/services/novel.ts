@@ -1,69 +1,47 @@
-import { Novel, NovelModel } from "../models/novel";
+import { Novel } from "../models/novel";
+import { storageService } from "./storage";
 
 export class NovelService {
   public async getAllNovels(): Promise<Novel[]> {
-    try {
-      const novels = await NovelModel.find().sort({ updatedAt: -1 });
-      return novels || [];
-    } catch (error) {
-      console.error("获取小说列表失败:", error);
-      return [];
-    }
+    return storageService.getAllNovels();
   }
 
   public async getNovelById(id: string): Promise<Novel | null> {
-    return NovelModel.findById(id);
+    return storageService.getNovelById(id);
   }
 
   public async createNovel(data: Partial<Novel>): Promise<Novel> {
-    const novel = new NovelModel({
-      ...data,
-      status: "draft",
-      progress: 0,
-      currentChapter: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    return novel.save();
+    const novelData = {
+      title: data.title || "",
+      description: data.description || "",
+      totalChapters: data.totalChapters || 1,
+      settings: data.settings || {
+        genre: [],
+        theme: [],
+        targetLength: 50000,
+        style: [],
+        constraints: [],
+      },
+    };
+    return storageService.createNovel(novelData as Omit<Novel, "id">);
   }
 
   public async updateNovel(
     id: string,
     data: Partial<Novel>
   ): Promise<Novel | null> {
-    return NovelModel.findByIdAndUpdate(
-      id,
-      {
-        ...data,
-        updatedAt: new Date(),
-      },
-      { new: true }
-    );
+    return storageService.updateNovel(id, data);
   }
 
   public async deleteNovel(id: string): Promise<void> {
-    await NovelModel.findByIdAndDelete(id);
+    return storageService.deleteNovel(id);
   }
 
   public async startNovel(id: string): Promise<Novel | null> {
-    return NovelModel.findByIdAndUpdate(
-      id,
-      {
-        status: "creating",
-        updatedAt: new Date(),
-      },
-      { new: true }
-    );
+    return storageService.updateNovel(id, { status: "creating" });
   }
 
   public async pauseNovel(id: string): Promise<Novel | null> {
-    return NovelModel.findByIdAndUpdate(
-      id,
-      {
-        status: "paused",
-        updatedAt: new Date(),
-      },
-      { new: true }
-    );
+    return storageService.updateNovel(id, { status: "paused" });
   }
 }

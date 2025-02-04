@@ -1,63 +1,37 @@
-import { Role, RoleModel } from "../models/Role";
+import { Role } from "../models/role";
+import { storageService } from "./storage";
 import { loadRoleConfig } from "../config/role";
 
 export class RoleService {
   public async getAllRoles(): Promise<Role[]> {
-    return RoleModel.find().sort({ updatedAt: -1 });
+    return storageService.getAllRoles();
   }
 
   public async getRoleById(id: string): Promise<Role | null> {
-    return RoleModel.findById(id);
+    return storageService.getRoleById(id);
   }
 
   public async createRole(type: Role["type"]): Promise<Role> {
     const config = loadRoleConfig(type);
-    const role = new RoleModel({
-      ...config,
-      status: "idle",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    return role.save();
+    return storageService.createRole(config);
   }
 
   public async updateRole(
     id: string,
     data: Partial<Role>
   ): Promise<Role | null> {
-    return RoleModel.findByIdAndUpdate(
-      id,
-      {
-        ...data,
-        updatedAt: new Date(),
-      },
-      { new: true }
-    );
+    return storageService.updateRole(id, data);
   }
 
   public async deleteRole(id: string): Promise<void> {
-    await RoleModel.findByIdAndDelete(id);
+    return storageService.deleteRole(id);
   }
 
   public async startRole(id: string): Promise<Role | null> {
-    return RoleModel.findByIdAndUpdate(
-      id,
-      {
-        status: "working",
-        updatedAt: new Date(),
-      },
-      { new: true }
-    );
+    return storageService.updateRole(id, { status: "working" });
   }
 
   public async pauseRole(id: string): Promise<Role | null> {
-    return RoleModel.findByIdAndUpdate(
-      id,
-      {
-        status: "paused",
-        updatedAt: new Date(),
-      },
-      { new: true }
-    );
+    return storageService.updateRole(id, { status: "paused" });
   }
 }

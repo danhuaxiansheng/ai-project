@@ -8,14 +8,15 @@ export interface RoleSetting {
   constraints: string[]; // 创作限制
 }
 
-export interface Role extends Document {
+export interface Role {
+  id: string;
   type: "writer" | "reviewer" | "rater"; // 角色类型
   name: string;
   status: "idle" | "working" | "paused" | "error";
   settings: RoleSetting;
   currentTask?: string; // 当前任务ID
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const RoleSettingSchema = new Schema<RoleSetting>({
