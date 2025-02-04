@@ -1,3 +1,5 @@
+"use client";
+
 import { Role, RoleAdjustment } from "@/types/role";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";

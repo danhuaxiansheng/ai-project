@@ -1,3 +1,5 @@
+"use client";
+
 import { useGlobalMonitor } from "@/lib/hooks/useGlobalMonitor";
 import { Role, RoleStatus } from "@/types/role";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

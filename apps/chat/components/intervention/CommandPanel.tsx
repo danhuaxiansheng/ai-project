@@ -1,4 +1,6 @@
-import { useState } from "react";
+"use client";
+
+import { useState, Suspense } from "react";
 import { useGlobalMonitor } from "@/lib/hooks/useGlobalMonitor";
 import { controlAPI } from "@/lib/api/control";
 import { Role, RoleAdjustment } from "@/types/role";
@@ -6,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/components/ui/use-toast";
 import { RoleMonitor } from "../monitor/RoleMonitor";
+import { AdjustmentControls } from "./AdjustmentControls";
+import { Loading } from "../ui/loading";
 
 export function CommandPanel() {
   const { roles, alerts } = useGlobalMonitor();
@@ -48,48 +52,50 @@ export function CommandPanel() {
   };
 
   return (
-    <div className="grid grid-cols-12 gap-4 p-4">
-      {/* 左侧角色监控 */}
-      <div className="col-span-3 space-y-4">
-        {roles.map((role) => (
-          <RoleMonitor key={role.id} role={role} onSelect={setSelectedRole} />
-        ))}
-      </div>
+    <Suspense fallback={<Loading />}>
+      <div className="grid grid-cols-12 gap-4">
+        {/* 左侧角色监控 */}
+        <div className="col-span-3 space-y-4">
+          {roles.map((role) => (
+            <RoleMonitor key={role.id} role={role} onSelect={setSelectedRole} />
+          ))}
+        </div>
 
-      {/* 中间控制面板 */}
-      <div className="col-span-6">
-        <div className="space-y-4">
-          <Button
-            variant="destructive"
-            size="lg"
-            className="w-full"
-            onClick={handleEmergencyStop}
-          >
-            紧急停止所有操作
-          </Button>
+        {/* 中间控制面板 */}
+        <div className="col-span-6">
+          <div className="space-y-4">
+            <Button
+              variant="destructive"
+              size="lg"
+              className="w-full"
+              onClick={handleEmergencyStop}
+            >
+              紧急停止所有操作
+            </Button>
 
-          {selectedRole && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">
-                调整 {selectedRole.name} 的参数
-              </h3>
-              <AdjustmentControls
-                role={selectedRole}
-                onAdjust={handleRoleAdjustment}
-              />
-            </div>
-          )}
+            {selectedRole && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                  调整 {selectedRole.name} 的参数
+                </h3>
+                <AdjustmentControls
+                  role={selectedRole}
+                  onAdjust={handleRoleAdjustment}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 右侧警报面板 */}
+        <div className="col-span-3 space-y-2">
+          {alerts.map((alert) => (
+            <Alert key={alert.id} variant={alert.severity}>
+              <AlertDescription>{alert.message}</AlertDescription>
+            </Alert>
+          ))}
         </div>
       </div>
-
-      {/* 右侧警报面板 */}
-      <div className="col-span-3 space-y-2">
-        {alerts.map((alert) => (
-          <Alert key={alert.id} variant={alert.severity}>
-            <AlertDescription>{alert.message}</AlertDescription>
-          </Alert>
-        ))}
-      </div>
-    </div>
+    </Suspense>
   );
 }
