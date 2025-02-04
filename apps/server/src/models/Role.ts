@@ -1,5 +1,3 @@
-import mongoose, { Document, Schema } from "mongoose";
-
 export interface RoleSetting {
   creativity: number; // 创造力 0-100
   strictness: number; // 严格度 0-100
@@ -18,31 +16,3 @@ export interface Role {
   createdAt: string;
   updatedAt: string;
 }
-
-const RoleSettingSchema = new Schema<RoleSetting>({
-  creativity: { type: Number, required: true, min: 0, max: 100 },
-  strictness: { type: Number, required: true, min: 0, max: 100 },
-  speed: { type: Number, required: true, min: 0, max: 100 },
-  style: [String],
-  constraints: [String],
-});
-
-const RoleSchema = new Schema<Role>({
-  type: {
-    type: String,
-    enum: ["writer", "reviewer", "rater"],
-    required: true,
-  },
-  name: { type: String, required: true },
-  status: {
-    type: String,
-    enum: ["idle", "working", "paused", "error"],
-    default: "idle",
-  },
-  settings: { type: RoleSettingSchema, required: true },
-  currentTask: { type: Schema.Types.ObjectId, ref: "Novel" },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
-
-export const RoleModel = mongoose.model<Role>("Role", RoleSchema);

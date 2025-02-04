@@ -1,4 +1,4 @@
-import { Role } from "../../models/Role";
+import { Role } from "../../models/role";
 import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
