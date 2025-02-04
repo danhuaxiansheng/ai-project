@@ -12,11 +12,18 @@ const ROLES_DIR = path.join(DATA_DIR, "roles");
 // 确保数据目录存在
 export const initStorage = async () => {
   try {
+    // 确保所有必要的目录都存在
     await fs.mkdir(DATA_DIR, { recursive: true });
     await fs.mkdir(NOVELS_DIR, { recursive: true });
     await fs.mkdir(CHAPTERS_DIR, { recursive: true });
     await fs.mkdir(ROLES_DIR, { recursive: true });
-    logger.info("数据存储目录已初始化");
+
+    logger.info("数据存储目录已初始化:", {
+      dataDir: DATA_DIR,
+      novelsDir: NOVELS_DIR,
+      chaptersDir: CHAPTERS_DIR,
+      rolesDir: ROLES_DIR,
+    });
   } catch (error) {
     logger.error("初始化数据存储目录失败:", error);
     throw error;

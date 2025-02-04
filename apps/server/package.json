@@ -4,9 +4,10 @@
   "description": "AI小说创作系统后端服务",
   "main": "dist/app.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
+    "dev": "ts-node-dev --respawn --transpile-only --exit-child src/app.ts",
     "build": "tsc",
-    "start": "node dist/app.js"
+    "start": "node dist/app.js",
+    "start:dev": "bash scripts/start.sh"
   },
   "dependencies": {
     "cors": "^2.8.5",
