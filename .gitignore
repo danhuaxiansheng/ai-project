@@ -1,16 +1,12 @@
 node_modules
-.DS_Store
 dist
 dist-ssr
 dist.zip
 dist.tar
 dist.war
-.nitro
-.output
 *-dist.zip
 *-dist.tar
 *-dist.war
-coverage
 *.local
 **/.vitepress/cache
 .cache
@@ -20,19 +16,12 @@ dev-dist
 .stylelintcache
 yarn.lock
 package-lock.json
-.VSCodeCounter
-**/backend-mock/data
 pnpm-lock.yaml
 # local env files
 .env.local
 .env.*.local
 .eslintcache
-
-**/__pycache__
-logs
-*.log
-npm-debug.log*
-
 *.sln
 *.sw?
 .history
+*.next
