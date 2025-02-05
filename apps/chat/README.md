@@ -1,9 +1,20 @@
-# AI小说创作系统 - 中控对话系统
+# AI 小说创作系统 - 中控对话系统
 
-## 项目说明
-该模块作为整个AI小说创作系统的中央控制中心，拥有最高决策权限，负责实时监控、干预和调整所有AI角色的行为。通过实时对话方式，确保创作过程的质量和方向始终符合预期。
+## 项目目标
+
+该模块作为整个 AI 小说创作系统的中央控制中心，拥有最高决策权限，负责实时监控、干预和调整所有 AI 角色的行为。通过实时对话方式，确保创作过程的质量和方向始终符合预期。
+
+### 具体目标
+
+1. **用户输入**: 用户在网页上输入一部分小说的片段，系统接收并处理这些输入。
+2. **角色分析**: 启动多个角色（如小说审核员、评分员、专业创作者、设定创作者和产品经理）对用户输入的小说片段进行分析，并生成反馈。
+3. **用户反馈与选择**: 用户对分析后的内容进行反馈和选择，保留部分特点并进行再次刷新，直到满意为止。
+4. **角色创作**: 根据用户的最终选择，角色-小说创作者开始进行创作，其他角色也在同时工作，确保协作顺畅。
+5. **实时反馈机制**: 各个角色向用户提供实时反馈，用户确认后再进入下一个角色的操作，形成类似群聊的互动。
+6. **循环创作过程**: 通过不断的反馈和调整，最终创建出一部完整的小说。
 
 ## 项目结构
+
 ```
 apps/chat/
 ├── app/                      # Next.js 应用目录
@@ -35,24 +46,28 @@ apps/chat/
 ## 核心功能
 
 ### 1. 全局监控
+
 - 实时监控所有角色的行为和输出
 - 追踪创作进度和质量指标
 - 检测潜在问题和风险
 - 分析角色间的协作效果
 
 ### 2. 高权限干预
+
 - 一键暂停所有角色操作
 - 发布全局指令和调整要求
 - 直接修改角色行为参数
 - 否决和回滚不当操作
 
 ### 3. 质量控制
+
 - 实时评估内容质量
 - 审核角色决策合理性
 - 确保风格和设定统一
 - 把控作品整体方向
 
 ### 4. 角色协调
+
 - 调解角色间冲突
 - 优化协作流程
 - 统一决策标准
@@ -61,6 +76,7 @@ apps/chat/
 ## 技术实现
 
 ### 1. 监控系统
+
 ```typescript
 // lib/hooks/useGlobalMonitor.ts
 export function useGlobalMonitor() {
@@ -81,7 +97,7 @@ export function useGlobalMonitor() {
   const checkForIssues = (roleUpdates: RoleStatus[]) => {
     const newAlerts = detectIssues(roleUpdates);
     if (newAlerts.length > 0) {
-      setAlerts(prev => [...prev, ...newAlerts]);
+      setAlerts((prev) => [...prev, ...newAlerts]);
       triggerIntervention(newAlerts);
     }
   };
@@ -91,40 +107,42 @@ export function useGlobalMonitor() {
 ```
 
 ### 2. 干预控制
+
 ```typescript
 // lib/api/control.ts
 export const controlAPI = {
   // 暂停所有角色操作
   async pauseAll() {
-    return await fetch('/api/control/pause-all', { method: 'POST' });
+    return await fetch("/api/control/pause-all", { method: "POST" });
   },
 
   // 发布全局指令
   async issueCommand(command: GlobalCommand) {
-    return await fetch('/api/control/command', {
-      method: 'POST',
-      body: JSON.stringify(command)
+    return await fetch("/api/control/command", {
+      method: "POST",
+      body: JSON.stringify(command),
     });
   },
 
   // 调整角色参数
   async adjustRole(roleId: string, adjustments: RoleAdjustment) {
     return await fetch(`/api/control/roles/${roleId}/adjust`, {
-      method: 'POST',
-      body: JSON.stringify(adjustments)
+      method: "POST",
+      body: JSON.stringify(adjustments),
     });
   },
 
   // 回滚操作
   async rollback(taskId: string) {
     return await fetch(`/api/control/tasks/${taskId}/rollback`, {
-      method: 'POST'
+      method: "POST",
     });
-  }
+  },
 };
 ```
 
 ### 3. 控制面板组件
+
 ```typescript
 // components/intervention/CommandPanel.tsx
 export function CommandPanel() {
@@ -133,23 +151,20 @@ export function CommandPanel() {
 
   const handleEmergencyStop = async () => {
     await controlAPI.pauseAll();
-    notify.warning('已暂停所有角色操作');
+    notify.warning("已暂停所有角色操作");
   };
 
   const handleRoleAdjustment = async (adjustment: RoleAdjustment) => {
     if (!selectedRole) return;
     await controlAPI.adjustRole(selectedRole, adjustment);
-    notify.success('角色参数已调整');
+    notify.success("角色参数已调整");
   };
 
   return (
     <div className="command-panel">
       <EmergencyButton onClick={handleEmergencyStop} />
-      <RoleSelector 
-        roles={roles}
-        onSelect={setSelectedRole}
-      />
-      <AdjustmentControls 
+      <RoleSelector roles={roles} onSelect={setSelectedRole} />
+      <AdjustmentControls
         roleId={selectedRole}
         onAdjust={handleRoleAdjustment}
       />
@@ -162,12 +177,14 @@ export function CommandPanel() {
 ## 使用说明
 
 ### 1. 监控操作
+
 - 实时查看各角色状态
 - 追踪任务执行进度
 - 监控质量指标变化
 - 接收预警信息
 
 ### 2. 干预操作
+
 - 发布全局指令
 - 调整角色参数
 - 暂停/恢复操作
@@ -176,24 +193,28 @@ export function CommandPanel() {
 ## 注意事项
 
 1. 权限控制
+
 - 严格控制访问权限
 - 记录所有操作日志
 - 定期审查操作记录
 
 2. 干预原则
+
 - 保持必要性原则
 - 干预要有理有据
 - 避免过度干预
 - 注重效果评估
 
 3. 应急处理
+
 - 制定应急预案
 - 快速响应机制
 - 问题升级流程
 - 定期演练测试
 
 4. 系统维护
+
 - 定期检查系统状态
 - 优化响应速度
 - 备份重要数据
-- 更新安全策略 
+- 更新安全策略
