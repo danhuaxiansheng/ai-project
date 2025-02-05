@@ -12,14 +12,16 @@ export default function ChatMessage({ message }: MessageProps) {
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[80%] rounded-lg p-3 ${
-        isUser ? 'bg-blue-500 text-white' : 'bg-gray-100'
+        isUser 
+          ? 'bg-primary text-primary-foreground' 
+          : 'bg-muted'
       }`}>
         {message.roleType && (
-          <div className="text-xs text-gray-500 mb-1">
+          <div className="text-xs text-muted-foreground mb-1">
             {message.roleType}
           </div>
         )}
-        <div>{message.content}</div>
+        <div className="whitespace-pre-wrap">{message.content}</div>
       </div>
     </div>
   )
