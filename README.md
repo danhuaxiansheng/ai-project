@@ -18,14 +18,6 @@
 - 目标读者：18-40岁男性
 - 创作风格：金庸笔法结合网文特色
 
-### 全栈
-- Next.js 13+
-- React 18+
-- TypeScript 5+
-- Tailwind CSS
-- SCSS Modules
-- Shadcn/ui
-
 ## 项目规划
 
 ### 第一阶段
@@ -117,13 +109,87 @@
 - 多轮对话交互
 - 实时反馈和修改
 
-## 贡献指南
+### 技术栈
+- Monorepo
+  - Turborepo
+  - PNPM Workspace
+- 前端框架
+  - Next.js 14+
+  - React 18+
+  - TypeScript 5+
+- 样式方案
+  - Tailwind CSS
+  - SCSS Modules
+  - Shadcn/ui
 
-欢迎提交 Issue 和 Pull Request 来帮助改进项目。请确保在提交代码前：
-1. 遵循项目的代码规范
-2. 编写必要的测试用例
-3. 更新相关文档
+### 开发指南
 
-## 许可证
+1. **环境准备**
+```bash
+# 安装 PNPM
+npm install -g pnpm
 
-MIT License
+# 安装依赖
+pnpm install
+```
+
+2. **开发命令**
+```bash
+# 开发模式
+pnpm dev
+
+# 构建项目
+pnpm build
+
+# 代码检查
+pnpm lint
+
+# 格式化代码
+pnpm format
+```
+
+3. **项目配置**
+- 在 `.env.local` 中配置环境变量
+- 确保 DeepSeek API Key 已正确设置
+
+### 技术栈：全栈
+- Monorepo
+  - Turborepo
+  - PNPM Workspace
+- 前端框架
+  - Next.js 14+
+  - React 18+
+  - TypeScript 5+
+- 样式方案
+  - Tailwind CSS
+  - SCSS Modules
+  - Shadcn/ui
+
+
+### 项目结构
+├── apps/
+│   └── web/                # 主应用
+├── packages/
+│   ├── eslint-config/     # 共享 ESLint 配置
+│   ├── typescript-config/ # 共享 TS 配置
+│   └── ui/               # 共享 UI 组件
+├── package.json          # 工作空间根配置
+├── pnpm-workspace.yaml   # PNPM 工作空间配置
+└── turbo.json           # Turbo 配置
+
+### web应用结构
+```bash
+apps/web/src/
+├── app/                    # Next.js 应用主目录
+│   ├── layout.tsx         # 主布局
+│   ├── page.tsx          # 首页
+│   └── chat/             # 对话系统页面
+├── components/            # 通用组件
+│   ├── ui/               # UI基础组件
+│   └── chat/             # 对话相关组件
+├── lib/                   # 工具函数和配置
+│   ├── deepseek/         # DeepSeek API 相关
+│   └── roles/            # 角色系统相关
+├── types/                # TypeScript 类型定义
+└── styles/               # 样式文件
+```
