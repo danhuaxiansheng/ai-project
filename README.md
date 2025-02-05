@@ -1,291 +1,314 @@
 # AI 小说创作系统
 
-基于 DeepSeek 的智能小说创作系统，通过多角色协作的方式，帮助用户创作小说。
+## 系统定义
+- 基于 DeepSeek 的智能小说创作系统
+- 采用多角色协作模式
+- 目标：辅助用户创作高质量小说
 
-## 系统特点
+## 目标定位
+1. **目标用户**
+   - 年龄：18-40岁
+   - 性别：男性
+   - 平台：起点中文网
+   - 风格：金庸笔法结合网文特色
 
-1. **多角色自动协作**
-   - 系统采用群聊形式，模拟真实的创作团队协作
-   - 角色按管理层、创作层、质控层的顺序自动响应
-   - 每个角色根据自身职责提供专业意见
-
-2. **角色设定**
-   - 管理层
-     - 产品经理：负责整体产品规划与定义
-     - 小说产品经理：专注网文市场分析
-   - 创作层
-     - 设定创作者：构建完整世界观体系
-     - 小说创作者：进行核心故事创作
-     - 创作助手：协助具体写作工作
-   - 质控层
-     - 评分员：评估作品质量
-     - 审核员：把控作品整体质量
-
-3. **工作流程**
-   1. **用户输入**: 用户在系统中输入创作想法或小说片段
-   2. **自动分工**: 系统自动触发多角色评审流程
-      - 管理层优先响应，进行市场和商业价值分析
-      - 创作层跟进，提供具体创作建议
-      - 质控层最后把关，确保作品质量
-   3. **实时反馈**: 各角色以群聊形式提供专业建议
-   4. **用户确认**: 用户可以根据建议进行调整和确认
-   5. **循环优化**: 通过多轮对话不断完善作品
-
-4. **界面特点**
-   - 群聊式界面设计
-   - 角色头像和身份标识
-   - 时间戳显示
-   - 消息状态提示
-
-## 技术实现
-
-1. **前端架构**
-   - Next.js + React
-   - TailwindCSS 样式系统
-   - TypeScript 类型支持
-
-2. **核心功能**
-   - 多角色自动响应机制
-   - 上下文感知的对话系统
-   - 实时状态反馈
-   - 消息流程控制
-
-3. **待实现功能**
-   - DeepSeek API 集成
-   - 角色间智能互动
-   - 历史记录保存
-   - 作品导出功能
-
-## 使用说明
-
-1. 输入创作想法或小说片段
-2. 系统自动触发多角色评审
-3. 等待各角色依次提供专业意见
-4. 根据建议调整创作方向
-5. 通过多轮对话完善作品
-
-## 开发计划
-
-- [x] 基础界面搭建
-- [x] 多角色响应机制
-- [x] 群聊式交互
-- [ ] AI 模型集成
-- [ ] 数据持久化
-- [ ] 导出功能
-
-## 项目目标
-
-该模块作为整个 AI 小说创作系统的中央控制中心，拥有最高决策权限，负责实时监控、干预和调整所有 AI 角色的行为。通过实时对话方式，确保创作过程的质量和方向始终符合预期。
-
-### 具体目标
-
-1. **用户输入**: 用户在网页上输入一部分小说的片段，系统接收并处理这些输入。
-2. **角色分析**: 启动多个角色（如小说审核员、评分员、专业创作者、设定创作者和产品经理）对用户输入的小说片段进行分析，并生成反馈。
-3. **用户反馈与选择**: 用户对分析后的内容进行反馈和选择，保留部分特点并进行再次刷新，直到满意为止。
-4. **角色创作**: 根据用户的最终选择，角色-小说创作者开始进行创作，其他角色也在同时工作，确保协作顺畅。
-5. **实时反馈机制**: 各个角色向用户提供实时反馈，用户确认后再进入下一个角色的操作，形成类似群聊的互动。
-6. **循环创作过程**: 通过不断的反馈和调整，最终创建出一部完整的小说。
-
-## 核心定位
-- 面向起点中文网
-- 目标读者：18-40岁男性
-- 创作风格：金庸笔法结合网文特色
-
-## 项目规划
-
-### 第一阶段
-- [x] 项目基础架构搭建
-- [x] AI 角色系统设计
-- [ ] 用户交互界面开发
-- [ ] 基础 AI 对话功能
-
-### 第二阶段
-- [ ] 多角色协同系统
-- [ ] 实时反馈机制
-- [ ] 创作质量评估系统
-- [ ] 用户个性化配置
+2. **创作目标**
+   - 商业性：符合市场需求
+   - 艺术性：保持文学品质
+   - 创新性：具有独特风格
 
 ## 角色体系
 
-### 1. 管理层（战略方向）
+### 1. 管理层
 1. **产品经理**
-   - 把控整体产品方向
-   - 制定创作策略和计划
-   - 协调各角色工作
-   - 确保项目如期推进
+   ```typescript
+   interface ProductManager {
+     role: '产品经理';
+     responsibilities: [
+       '把控整体产品方向',
+       '制定创作策略和计划',
+       '协调各角色工作',
+       '确保项目如期推进'
+     ];
+     priority: 1;
+   }
+   ```
 
-2. **市场分析师**（新增）
-   - 进行市场调研和分析
-   - 研究读者偏好和市场趋势
-   - 预测作品市场表现
-   - 提供数据支持决策
+2. **市场分析师**
+   ```typescript
+   interface MarketAnalyst {
+     role: '市场分析师';
+     responsibilities: [
+       '进行市场调研和分析',
+       '研究读者偏好和市场趋势',
+       '预测作品市场表现',
+       '提供数据支持决策'
+     ];
+     priority: 2;
+   }
+   ```
 
-### 2. 创作层（内容产出）
-3. **世界观架构师**（原设定创作者）
-   - 构建完整世界观体系
-   - 设计核心规则和法则
-   - 创建独特文化背景
-   - 确保设定的一致性
+### 2. 创作层
+3. **世界观架构师**
+   ```typescript
+   interface WorldBuilder {
+     role: '世界观架构师';
+     responsibilities: [
+       '构建完整世界观体系',
+       '设计核心规则和法则',
+       '创建独特文化背景',
+       '确保设定的一致性'
+     ];
+     priority: 3;
+   }
+   ```
 
-4. **剧情设计师**（原小说创作者）
-   - 设计主线剧情走向
-   - 规划情节发展节奏
-   - 设计关键剧情转折
-   - 把控故事整体结构
+4. **剧情设计师**
+   ```typescript
+   interface PlotDesigner {
+     role: '剧情设计师';
+     responsibilities: [
+       '设计主线剧情走向',
+       '规划情节发展节奏',
+       '设计关键剧情转折',
+       '把控故事整体结构'
+     ];
+     priority: 4;
+   }
+   ```
 
-5. **人物塑造师**（新增）
-   - 设计角色性格特征
-   - 构建人物关系网络
-   - 设计角色成长轨迹
-   - 确保人物形象丰满
+5. **文案优化师**
+   ```typescript
+   interface ContentOptimizer {
+     role: '文案优化师';
+     responsibilities: [
+       '优化文字表达',
+       '提升文学性和可读性',
+       '打磨细节描写',
+       '统一文风把控'
+     ];
+     priority: 5;
+   }
+   ```
 
-6. **文案优化师**（新增）
-   - 优化文字表达
-   - 提升文学性和可读性
-   - 打磨细节描写
-   - 统一文风把控
+### 3. 质控层
+6. **品质监理**
+   ```typescript
+   interface QualityController {
+     role: '品质监理';
+     responsibilities: [
+       '把控整体作品质量',
+       '审核内容合规性',
+       '检查设定连贯性',
+       '评估商业潜力'
+     ];
+     priority: 6;
+   }
+   ```
 
-### 3. 质控层（品质保障）
-7. **体验官**（新增）
-   - 从读者视角评估
-   - 反馈阅读体验
-   - 预测读者反应
-   - 提供改进建议
+7. **体验官**
+   ```typescript
+   interface ExperienceOfficer {
+     role: '体验官';
+     responsibilities: [
+       '从读者视角评估',
+       '反馈阅读体验',
+       '预测读者反应',
+       '提供改进建议'
+     ];
+     priority: 7;
+   }
+   ```
 
-8. **品质监理**（原审核员）
-   - 把控整体作品质量
-   - 审核内容合规性
-   - 检查设定连贯性
-   - 评估商业潜力
+## 工作流程
 
-### 工作流程
-
-1. **创意启动**
-   - 产品经理确定创作方向
-   - 市场分析师提供市场洞察
-   - 体验官提供读者视角
-
-2. **世界构建**
-   - 世界观架构师搭建框架
-   - 人物塑造师设计角色
-   - 品质监理审核基础设定
-
-3. **内容创作**
-   - 剧情设计师规划故事
-   - 文案优化师完善表达
-   - 体验官实时反馈
-
-4. **质量把控**
-   - 品质监理全程监督
-   - 市场分析师评估市场性
-   - 产品经理最终决策
-
-### 协作特点
-
-1. **分工协作**
-   - 每个角色各司其职
-   - 职责明确不重叠
-   - 协同效率最大化
-
-2. **反馈机制**
-   - 实时多向反馈
-   - 快速迭代优化
-   - 持续质量提升
-
-3. **决策流程**
-   - 基于数据的决策
-   - 多角度的评估
-   - 市场导向的调整
-
-## DeepSeek API 集成
-
-本系统使用 DeepSeek API 来实现各个角色的功能，通过 API 调用实现：
-- 角色人格设定
-- 内容生成和优化
-- 多轮对话交互
-- 实时反馈和修改
-
-### 技术栈
-- Monorepo
-  - Turborepo
-  - PNPM Workspace
-- 前端框架
-  - Next.js 14+
-  - React 18+
-  - TypeScript 5+
-- 样式方案
-  - Tailwind CSS
-  - SCSS Modules
-  - Shadcn/ui
-
-### 开发指南
-
-1. **环境准备**
-```bash
-# 安装 PNPM
-npm install -g pnpm
-
-# 安装依赖
-pnpm install
+```typescript
+interface WorkFlow {
+  stages: {
+    1: {
+      name: '用户输入';
+      steps: [
+        '用户输入创作想法或小说片段',
+        '系统识别关键信息',
+        '准备角色响应'
+      ];
+    };
+    2: {
+      name: '创意分析';
+      steps: [
+        '产品经理评估创作方向',
+        '市场分析师分析市场价值',
+        '体验官预估读者反应'
+      ];
+    };
+    3: {
+      name: '世界构建';
+      steps: [
+        '世界观架构师扩展设定',
+        '品质监理审核可行性',
+        '市场分析师评估接受度'
+      ];
+    };
+    4: {
+      name: '内容创作';
+      steps: [
+        '剧情设计师展开情节',
+        '文案优化师完善表达',
+        '体验官实时反馈'
+      ];
+    };
+    5: {
+      name: '质量把控';
+      steps: [
+        '品质监理全程监督',
+        '市场分析师评估市场性',
+        '产品经理最终决策'
+      ];
+    };
+    6: {
+      name: '用户确认';
+      steps: [
+        '展示各角色建议',
+        '等待用户选择方向',
+        '准备下一轮优化'
+      ];
+    };
+  };
+  interaction: {
+    inputTypes: [
+      '创作想法',    // 概念、灵感等
+      '故事片段',    // 具体的小说内容
+      '修改建议',    // 对现有内容的修改意见
+      '方向调整'     // 对创作方向的调整
+    ];
+    responseFlow: {
+      type: 'sequential';    // 角色按顺序响应
+      mode: 'conversation';  // 以对话形式展示
+      format: 'grouped';     // 按角色类型分组
+    };
+    userControl: {
+      canInterrupt: true;    // 用户可以随时打断
+      canRedirect: true;     // 可以调整创作方向
+      canRollback: true;     // 可以回退到之前版本
+    };
+  };
+  iterationRules: {
+    conditions: {
+      userSatisfied: boolean;     // 用户满意度
+      qualityThresholdMet: number;// 质量阈值
+      marketViabilityMet: number; // 市场可行性
+    };
+    maxIterations: number;        // 最大迭代次数
+    timeoutPerRound: number;      // 每轮超时时间
+  };
+}
 ```
 
-2. **开发命令**
-```bash
-# 开发模式
-pnpm dev
+## 对话流程示例
 
-# 构建项目
-pnpm build
-
-# 代码检查
-pnpm lint
-
-# 格式化代码
-pnpm format
+```typescript
+interface DialogueExample {
+  userInput: {
+    type: '创作想法';
+    content: '想写一个修仙小说，但主角不是传统意义上的天才，而是一个普通人，通过独特的思维方式逆袭';
+  };
+  systemResponse: {
+    management: {
+      productManager: {
+        analysis: '创新性构思，符合当前市场差异化需求',
+        suggestion: '建议突出主角思维方式的独特性，可以考虑...'
+      },
+      marketAnalyst: {
+        analysis: '类似定位作品市场表现数据分析...',
+        suggestion: '建议针对25-35岁读者群体，强调...'
+      }
+    },
+    creation: {
+      worldBuilder: {
+        analysis: '修仙体系设计思路...',
+        suggestion: '可以设计一个更注重思维方式的修仙体系...'
+      },
+      plotDesigner: {
+        analysis: '人物成长线索设计...',
+        suggestion: '建议通过以下关键节点展现主角成长...'
+      }
+    },
+    quality: {
+      qualityController: {
+        analysis: '创新点与市场接受度平衡性分析...',
+        suggestion: '需要注意以下几个可能的风险点...'
+      },
+      experienceOfficer: {
+        analysis: '读者代入感和新鲜感分析...',
+        suggestion: '建议增加以下几个让读者产生共鸣的设计...'
+      }
+    }
+  };
+  userConfirmation: {
+    type: 'direction';  // 确认创作方向
+    feedback: '采纳建议，但希望更强调主角的思维特点';
+    nextIteration: true;
+  };
+}
 ```
 
-3. **项目配置**
-- 在 `.env.local` 中配置环境变量
-- 确保 DeepSeek API Key 已正确设置
+## 评分系统
 
-### 技术栈：全栈
-- Monorepo
-  - Turborepo
-  - PNPM Workspace
-- 前端框架
-  - Next.js 14+
-  - React 18+
-  - TypeScript 5+
-- 样式方案
-  - Tailwind CSS
-  - SCSS Modules
-  - Shadcn/ui
+```typescript
+interface QualityMetrics {
+  plot: number;        // 情节性（25分）
+  character: number;   // 人物塑造（20分）
+  worldView: number;   // 世界观（15分）
+  writing: number;     // 文笔（15分）
+  innovation: number;  // 创新性（15分）
+  commercial: number;  // 商业性（10分）
+}
 
+interface EvaluationRules {
+  evaluators: Role[];           // 评分角色
+  weights: Record<Role, number>; // 角色权重
+  frequency: 'perChapter' | 'perSection' | 'final';
+  feedbackType: 'immediate' | 'scheduled';
+}
+```
 
-### 项目结构
-├── apps/
-│   └── web/                # 主应用
-├── packages/
-│   ├── eslint-config/     # 共享 ESLint 配置
-│   ├── typescript-config/ # 共享 TS 配置
-│   └── ui/               # 共享 UI 组件
-├── package.json          # 工作空间根配置
-├── pnpm-workspace.yaml   # PNPM 工作空间配置
-└── turbo.json           # Turbo 配置
+## 角色协作机制
 
-### web应用结构
-```bash
-apps/web/src/
-├── app/                    # Next.js 应用主目录
-│   ├── layout.tsx         # 主布局
-│   ├── page.tsx          # 首页
-│   └── chat/             # 对话系统页面
-├── components/            # 通用组件
-│   ├── ui/               # UI基础组件
-│   └── chat/             # 对话相关组件
-├── lib/                   # 工具函数和配置
-│   ├── deepseek/         # DeepSeek API 相关
-│   └── roles/            # 角色系统相关
-├── types/                # TypeScript 类型定义
-└── styles/               # 样式文件
+```typescript
+interface CollaborationSystem {
+  workflow: {
+    trigger: 'userInput';
+    sequence: ['management', 'creation', 'quality'];
+    responseDelay: number; // 毫秒
+  };
+  feedback: {
+    type: 'realtime';
+    confirmation: 'userRequired';
+    conflictResolution: 'automatic';
+  };
+  iteration: {
+    basis: 'userFeedback';
+    improvement: 'continuous';
+    completion: 'userSatisfied';
+  };
+}
+```
+
+## 技术实现
+
+```typescript
+interface TechStack {
+  frontend: {
+    framework: 'Next.js 14+';
+    ui: ['React 18+', 'TypeScript 5+'];
+    styling: ['Tailwind CSS', 'Shadcn/ui'];
+  };
+  monorepo: {
+    tools: ['Turborepo', 'PNPM Workspace'];
+    structure: {
+      apps: ['web'];
+      packages: ['ui', 'eslint-config', 'typescript-config'];
+    };
+  };
+}
 ```
