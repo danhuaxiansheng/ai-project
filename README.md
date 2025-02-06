@@ -212,3 +212,117 @@ interface Components {
   };
 }
 ```
+
+## AI 模型集成
+
+```typescript
+interface AIModelConfig {
+  // 主要模型选择
+  primary: {
+    provider: 'DeepSeek' | 'OpenAI';
+    models: {
+      chat: 'deepseek-chat' | 'gpt-4-turbo';
+      creation: 'deepseek-coder' | 'gpt-4';
+      analysis: 'deepseek-base' | 'gpt-3.5-turbo';
+    };
+  };
+
+  // 角色设定
+  rolePrompts: {
+    management: {
+      systemPrompt: string;  // 管理层角色的系统提示词
+      temperature: 0.7;      // 更注重逻辑性
+    };
+    creation: {
+      systemPrompt: string;  // 创作层角色的系统提示词
+      temperature: 0.9;      // 更注重创造性
+    };
+    quality: {
+      systemPrompt: string;  // 质控层角色的系统提示词
+      temperature: 0.3;      // 更注重准确性
+    };
+  };
+
+  // API 配置
+  apiConfig: {
+    deepseek: {
+      apiKey: string;
+      baseUrl: string;
+      maxTokens: number;
+      timeout: number;
+    };
+    openai: {
+      apiKey: string;
+      baseUrl: string;
+      maxTokens: number;
+      timeout: number;
+    };
+  };
+}
+```
+
+### 模型使用说明
+
+1. **角色分工**
+   - 产品经理：使用 GPT-4/DeepSeek-Chat 进行需求分析和任务分配
+   - 世界观架构师：使用 GPT-4/DeepSeek-Chat 构建世界观和设定
+   - 剧情设计师：使用 GPT-4/DeepSeek-Chat 设计情节发展
+   - 其他角色：根据具体任务选择适合的模型
+
+2. **模型特点**
+   - DeepSeek：
+     - 优势：对中文创作理解更深，特别适合修仙小说创作
+     - 使用场景：世界观构建、修仙体系设计、战斗场景描写
+   - OpenAI：
+     - 优势：逻辑性强，上下文理解准确
+     - 使用场景：情节规划、人物性格设计、质量控制
+
+3. **提示词策略**
+   ```typescript
+   interface PromptStrategy {
+     // 角色定位
+     roleDefinition: {
+       background: string;    // 角色背景
+       responsibility: string; // 具体职责
+       constraints: string[]; // 行为约束
+     };
+     
+     // 输出格式
+     outputFormat: {
+       structure: string;     // 输出结构
+       style: string;        // 表达风格
+       length: number;       // 内容长度
+     };
+     
+     // 质量控制
+     qualityControl: {
+       requirements: string[]; // 质量要求
+       examples: string[];    // 示例
+       forbidden: string[];   // 禁止内容
+     };
+   }
+   ```
+
+4. **环境变量配置**
+   ```bash
+   # DeepSeek配置
+   DEEPSEEK_API_KEY=your_deepseek_api_key
+   DEEPSEEK_API_URL=https://api.deepseek.com/v1
+   
+   # OpenAI配置
+   OPENAI_API_KEY=your_openai_api_key
+   OPENAI_API_URL=https://api.openai.com/v1
+   ```
+
+5. **模型调用流程**
+   - 初始分析：使用 GPT-4/DeepSeek-Chat 进行内容理解
+   - 创作阶段：根据任务特点选择合适的模型
+   - 质量审核：使用 GPT-4 进行逻辑性和连贯性检查
+   - 优化完善：根据反馈使用相应模型进行修改
+
+6. **注意事项**
+   - 确保 API 密钥安全存储
+   - 实现请求速率限制
+   - 添加错误重试机制
+   - 保持模型响应的多样性
+   - 定期更新提示词策略
