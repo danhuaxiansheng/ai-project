@@ -1,110 +1,113 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import ChatMessage from './ChatMessage'
 import { roles } from '@/lib/roles/config'
-
-interface Message {
-  role: 'user' | 'assistant'
-  content: string
-  roleType?: string
-  roleId?: string
-}
+import { RoleMessage } from '@/types/role'
+import { ChatManager } from '@/lib/chat/chatManager'
+import { RoleManager } from '@/lib/roles/roleManager'
+import { EventBus } from '@/lib/events/eventBus'
 
 export default function ChatContainer() {
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<RoleMessage[]>([])
   const [input, setInput] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  // 模拟各个角色依次响应
-  const handleRolesResponse = async (userInput: string) => {
-    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-    
-    // 管理层角色先响应
-    for (const role of roles.filter(r => r.type === 'management')) {
-      await delay(1000) // 模拟API调用延迟
-      const response: Message = {
-        role: 'assistant',
-        content: generateRoleResponse(role, userInput, messages),
-        roleType: role.name,
-        roleId: role.id
-      }
-      setMessages(prev => [...prev, response])
+  const roleManager = useMemo(() => new RoleManager(), [])
+  const chatManager = useMemo(() => new ChatManager(roleManager), [roleManager])
+  const eventBus = useMemo(() => EventBus.getInstance(), [])
+
+  useEffect(() => {
+    // 订阅消息更新
+    const handleNewMessage = (message: RoleMessage) => {
+      setMessages(prev => [...prev, message])
     }
 
-    // 创作层角色响应
-    for (const role of roles.filter(r => r.type === 'creation')) {
-      await delay(1000)
-      const response: Message = {
-        role: 'assistant',
-        content: generateRoleResponse(role, userInput, messages),
-        roleType: role.name,
-        roleId: role.id
-      }
-      setMessages(prev => [...prev, response])
+    // 订阅错误处理
+    const handleError = (error: { message: string }) => {
+      setError(error.message)
+      setIsProcessing(false)
     }
 
-    // 质控层角色最后响应
-    for (const role of roles.filter(r => r.type === 'quality')) {
-      await delay(1000)
-      const response: Message = {
-        role: 'assistant',
-        content: generateRoleResponse(role, userInput, messages),
-        roleType: role.name,
-        roleId: role.id
-      }
-      setMessages(prev => [...prev, response])
-    }
-  }
+    eventBus.subscribe('chat:newMessage', handleNewMessage)
+    eventBus.subscribe('chat:error', handleError)
 
-  const handleSend = async () => {
+    return () => {
+      eventBus.unsubscribe('chat:newMessage', handleNewMessage)
+      eventBus.unsubscribe('chat:error', handleError)
+    }
+  }, [eventBus])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     if (!input.trim() || isProcessing) return
 
-    const userMessage: Message = {
-      role: 'user',
-      content: input
-    }
-    
-    setMessages(prev => [...prev, userMessage])
-    setInput('')
     setIsProcessing(true)
+    setError(null)
 
-    await handleRolesResponse(input)
-    setIsProcessing(false)
+    try {
+      const userMessage: RoleMessage = {
+        id: crypto.randomUUID(),
+        roleId: 'user',
+        content: input,
+        timestamp: Date.now(),
+        type: 'text'
+      }
+      setMessages(prev => [...prev, userMessage])
+
+      await chatManager.processUserInput(input)
+      setInput('')
+    } catch (error) {
+      setError('发送消息失败，请重试')
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   return (
-    <div className="flex flex-col h-[80vh] border rounded-lg">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message, index) => (
-          <ChatMessage key={index} message={message} />
+    <div className="flex flex-col h-screen">
+      {error && (
+        <div className="p-2 bg-red-100 text-red-600 text-center">
+          {error}
+        </div>
+      )}
+      
+      <div className="flex-1 overflow-y-auto p-4">
+        {messages.map(message => (
+          <ChatMessage key={message.id} message={message} />
         ))}
       </div>
       
-      <div className="border-t p-4 flex gap-2">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && !isProcessing && handleSend()}
-          placeholder={isProcessing ? "AI角色正在思考中..." : "请输入您的创作想法..."}
-          disabled={isProcessing}
-          className="flex-1"
-        />
-        <Button 
-          onClick={handleSend} 
-          disabled={isProcessing}
-        >
-          {isProcessing ? "处理中..." : "发送"}
-        </Button>
-      </div>
+      <form onSubmit={handleSubmit} className="p-4 border-t">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            className="flex-1 p-2 border rounded"
+            placeholder={isProcessing ? "AI正在思考中..." : "输入您的创作内容..."}
+            disabled={isProcessing}
+          />
+          <button
+            type="submit"
+            disabled={isProcessing}
+            className={`px-4 py-2 rounded text-white ${
+              isProcessing ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'
+            }`}
+          >
+            {isProcessing ? '处理中...' : '发送'}
+          </button>
+        </div>
+      </form>
     </div>
   )
 }
 
 // 根据角色生成响应
-function generateRoleResponse(role: typeof roles[0], userInput: string, messages: Message[]): string {
+function generateRoleResponse(role: typeof roles[0], userInput: string, messages: RoleMessage[]): string {
   const context = messages.map(m => `${m.roleType ? `[${m.roleType}]` : '[用户]'}: ${m.content}`).join('\n')
   
   switch (role.type) {

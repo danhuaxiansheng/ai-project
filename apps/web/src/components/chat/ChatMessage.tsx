@@ -1,41 +1,40 @@
-interface MessageProps {
-  message: {
-    role: 'user' | 'assistant'
-    content: string
-    roleType?: string
-    roleId?: string
-  }
+import { Avatar } from "@workspace/ui/components/avatar"
+import { RoleMessage } from "@/types/role"
+
+interface ChatMessageProps {
+  message: RoleMessage
 }
 
-export default function ChatMessage({ message }: MessageProps) {
-  const isUser = message.role === 'user'
-  
+export default function ChatMessage({ message }: ChatMessageProps) {
+  const isUser = message.roleId === 'user'
+
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} group`}>
-      {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center mr-2 text-xs">
-          {message.roleType?.[0]}
+    <div className={`flex gap-3 mb-4 ${isUser ? 'flex-row-reverse' : ''}`}>
+      <Avatar
+        className="w-8 h-8"
+        src={isUser ? '/avatars/user.png' : `/avatars/${message.roleId}.png`}
+        fallback={isUser ? 'U' : message.roleId[0].toUpperCase()}
+      />
+      
+      <div className={`flex-1 max-w-[80%] ${isUser ? 'text-right' : ''}`}>
+        <div className="mb-1 text-sm text-gray-500">
+          {isUser ? '您' : message.roleId}
         </div>
-      )}
-      <div className={`max-w-[80%] rounded-lg p-3 ${
-        isUser 
-          ? 'bg-primary text-primary-foreground' 
-          : 'bg-muted'
-      }`}>
-        {message.roleType && (
-          <div className="text-xs text-muted-foreground mb-1 flex items-center gap-2">
-            <span className="font-medium">{message.roleType}</span>
-            <span className="opacity-50">|</span>
-            <span className="text-[10px] opacity-50">{getTimestamp()}</span>
+        
+        <div className={`p-3 rounded-lg ${
+          isUser 
+            ? 'bg-blue-500 text-white' 
+            : 'bg-gray-100 text-gray-800'
+        }`}>
+          {message.content}
+        </div>
+        
+        {message.type !== 'text' && (
+          <div className="mt-1 text-xs text-gray-400">
+            {message.type}
           </div>
         )}
-        <div className="whitespace-pre-wrap">{message.content}</div>
       </div>
     </div>
   )
-}
-
-function getTimestamp() {
-  const now = new Date()
-  return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
 } 

@@ -2,8 +2,8 @@
 const nextConfig = {
   transpilePackages: ["@workspace/ui"],
   experimental: {
-    esmExternals: true
-  }
-}
+    esmExternals: true,
+  },
+};
 
-export default nextConfig
+module.exports = nextConfig;
