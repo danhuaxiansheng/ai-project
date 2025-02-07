@@ -159,9 +159,7 @@ interface TechStack {
       components: 'shadcn/ui';
     };
   };
-
   tools: {
-    monorepo: 'Turborepo';
     packageManager: 'PNPM';
     codeQuality: {
       linter: 'ESLint';
@@ -175,18 +173,8 @@ interface TechStack {
 
 ```
 .
-├── apps/
-│   └── web/                    # Next.js 主应用
-│       ├── src/
-│       │   ├── app/           # App Router
-│       │   ├── lib/          # 工具函数
-│       │   └── types/        # TypeScript 类型
-│       └── public/           # 静态资源
-│
-├── packages/                   # 共享包
-│   ├── ui/                    # UI组件库
-│   └── configs/               # 项目配置
-│
+├── app/                       # Next.js 主应用
+├── public/                    # 静态资源
 ├── role/                      # 角色定义
 └── projects/                  # 小说项目文件
 ```
