@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Role, RoleCategory, roles } from "@/types/role";
 import { motion } from "framer-motion";
+import { DynamicIcon } from "./dynamic-icon";
 
 interface RoleSelectorProps extends React.HTMLAttributes<HTMLDivElement> {
   selectedRole?: Role;
@@ -58,7 +59,7 @@ export function RoleSelector({
                 )}
               >
                 <div className="flex items-center gap-2">
-                  <role.icon className="w-4 h-4" />
+                  <DynamicIcon name={role.icon} className="w-4 h-4" />
                   <div className="flex-1">
                     <div className="font-medium">{role.name}</div>
                     <div className="text-xs text-muted-foreground line-clamp-1">

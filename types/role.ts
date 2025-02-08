@@ -1,23 +1,19 @@
-import {
-  Users,
-  Briefcase,
-  LineChart,
-  Globe2,
-  PenTool,
-  UserCircle,
-  Shield,
-  Brain,
-  LucideIcon,
-} from "lucide-react";
-
 export type RoleCategory = "management" | "creation" | "quality";
 
 export interface Role {
   id: string;
   name: string;
-  category: RoleCategory;
+  type: "management" | "creation" | "quality";
   description: string;
-  icon: LucideIcon;
+  permissions: string[];
+  systemPrompt: string;
+  icon: string; // Iconify 图标名称
+}
+
+export interface RoleResponse {
+  content: string;
+  role: Role;
+  timestamp: number;
 }
 
 export const roles: Role[] = [
@@ -25,54 +21,68 @@ export const roles: Role[] = [
   {
     id: "product-manager",
     name: "产品经理",
-    category: "management",
+    type: "management",
     description: "需求分析和任务分配，把控创作方向",
-    icon: Briefcase,
+    permissions: [],
+    systemPrompt: "",
+    icon: "mdi:briefcase", // 使用 Material Design Icons
   },
   {
     id: "market-analyst",
     name: "市场分析师",
-    category: "management",
+    type: "management",
     description: "市场定位和数据分析",
-    icon: LineChart,
+    permissions: [],
+    systemPrompt: "",
+    icon: "mdi:chart-line",
   },
 
   // 创作层
   {
     id: "world-architect",
     name: "世界观架构师",
-    category: "creation",
+    type: "creation",
     description: "构建小说世界观和设定",
-    icon: Globe2,
+    icon: "mdi:earth",
+    permissions: [],
+    systemPrompt: "",
   },
   {
     id: "plot-designer",
     name: "剧情设计师",
-    category: "creation",
+    type: "creation",
     description: "设计情节发展和结构",
-    icon: PenTool,
+    icon: "mdi:pencil",
+    permissions: [],
+    systemPrompt: "",
   },
   {
     id: "character-designer",
     name: "角色塑造师",
-    category: "creation",
+    type: "creation",
     description: "设计和完善人物性格与成长",
-    icon: UserCircle,
+    icon: "mdi:account-circle",
+    permissions: [],
+    systemPrompt: "",
   },
 
   // 质控层
   {
     id: "quality-inspector",
     name: "品质监理",
-    category: "quality",
+    type: "quality",
     description: "审核内容质量和一致性",
-    icon: Shield,
+    icon: "mdi:shield",
+    permissions: [],
+    systemPrompt: "",
   },
   {
     id: "logic-checker",
     name: "逻辑检查员",
-    category: "quality",
+    type: "quality",
     description: "确保情节和设定的合理性",
-    icon: Brain,
+    icon: "mdi:brain",
+    permissions: [],
+    systemPrompt: "",
   },
 ];

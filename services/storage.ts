@@ -1,4 +1,5 @@
 import { Role } from "@/types/role";
+import { Message } from "@/types/message";
 
 export interface CachedContent {
   role: Role;
@@ -8,7 +9,7 @@ export interface CachedContent {
 
 export class StorageService {
   private static readonly CONTENT_KEY = "novel-content";
-  private static readonly MESSAGE_KEY = "chat-messages";
+  private static readonly MESSAGE_KEY = "chat_messages";
 
   private static isClient = typeof window !== "undefined";
 
@@ -47,22 +48,22 @@ export class StorageService {
   }
 
   // 消息缓存
-  static saveMessagesToCache(messages: any[]): void {
+  static saveMessagesToCache(messages: Message[]): void {
     if (!this.isClient) return;
     try {
       localStorage.setItem(this.MESSAGE_KEY, JSON.stringify(messages));
     } catch (error) {
-      console.error("消息缓存失败:", error);
+      console.error("保存消息到缓存失败:", error);
     }
   }
 
-  static getMessagesFromCache(): any[] {
+  static getMessagesFromCache(): Message[] {
     if (!this.isClient) return [];
     try {
       const cached = localStorage.getItem(this.MESSAGE_KEY);
       return cached ? JSON.parse(cached) : [];
     } catch (error) {
-      console.error("读取消息缓存失败:", error);
+      console.error("从缓存获取消息失败:", error);
       return [];
     }
   }

@@ -21,20 +21,17 @@ export function NovelEditor({
 }: NovelEditorProps) {
   const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        history: false,
+      }),
       Placeholder.configure({
         placeholder,
         emptyEditorClass:
           "before:content-[attr(data-placeholder)] before:text-muted-foreground before:float-left before:pointer-events-none",
       }),
     ],
-    content,
     editorProps: {
       attributes: {
         class: cn(
@@ -49,6 +46,22 @@ export function NovelEditor({
     },
   });
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (editor && isMounted && content) {
+      editor.commands.setContent(content);
+    }
+  }, [editor, content, isMounted]);
+
+  useEffect(() => {
+    return () => {
+      editor?.destroy();
+    };
+  }, [editor]);
+
   if (!isMounted) {
     return (
       <div
@@ -60,6 +73,10 @@ export function NovelEditor({
         <div className="h-[200px] bg-muted rounded-md" />
       </div>
     );
+  }
+
+  if (!editor) {
+    return null;
   }
 
   return (

@@ -3,12 +3,12 @@ import { cn } from "@/lib/utils";
 import { RoleSelector } from "@/components/role-selector";
 import { useRoleStore } from "@/store/role-store";
 import { CollaboratorsList } from "./collaborators-list";
+import { DynamicIcon } from "./dynamic-icon";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function Sidebar({ className, ...props }: SidebarProps) {
   const { selectedRole, setSelectedRole } = useRoleStore();
-
   return (
     <div className={cn("flex flex-col", className)} {...props}>
       <div className="p-4 border-b">
@@ -31,7 +31,7 @@ export function Sidebar({ className, ...props }: SidebarProps) {
         <div className="text-sm text-muted-foreground">当前项目：示例项目</div>
         {selectedRole && (
           <div className="flex items-center gap-2 mt-2 text-sm">
-            <selectedRole.icon className="w-4 h-4" />
+            <DynamicIcon name={selectedRole.icon} className="w-4 h-4" />
             当前角色：{selectedRole.name}
           </div>
         )}
