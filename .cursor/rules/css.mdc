@@ -1,0 +1,12 @@
+---
+description: 在项目中使用 CSS 的规范。
+globs: **/*.css
+---
+# css.rules
+- 优先使用 Tailwind CSS 类。
+- 复杂样式使用 scoped CSS。
+- 响应式设计使用 Tailwind 的断点。
+- 使用 CSS 变量来管理颜色和间距。
+- 遵循 BEM（块、元素、修饰符）命名规范。
+- 使用媒体查询实现响应式设计。
+- 避免使用 !important，除非必要。

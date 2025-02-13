@@ -1,0 +1,12 @@
+---
+description: 在 TypeScript 项目中，遵循项目的编码规范和最佳实践。
+globs: **/*.ts
+---
+# typescript.rules
+- 使用 TypeScript 的类型系统，避免使用 `any` 类型。
+- 使用箭头函数表达式。
+- 使用 `const` 和 `let` 替代 `var`。
+- 遵循项目的命名约定，变量和函数使用 camelCase，类名使用 PascalCase。
+- 使用接口（`interface`）定义对象类型，避免使用类型别名（`type`）除非必要。
+- 使用 `async/await` 处理异步操作，避免使用回调函数。
+- 遵循项目的文件结构和模块化规范。
