@@ -13,15 +13,7 @@ export function RoleSelector() {
 
   const handleRoleSelect = (role: Role) => {
     if (state.selectedRole?.id !== role.id) {
-      if (state.messages.length > 0) {
-        // 如果有对话历史，提示用户是否要切换角色
-        if (window.confirm("切换角色将清空当前对话历史，是否继续？")) {
-          dispatch({ type: "CLEAR_MESSAGES" });
-          dispatch({ type: "SET_ROLE", payload: role });
-        }
-      } else {
-        dispatch({ type: "SET_ROLE", payload: role });
-      }
+      dispatch({ type: "SET_ROLE", payload: role });
     }
   };
 

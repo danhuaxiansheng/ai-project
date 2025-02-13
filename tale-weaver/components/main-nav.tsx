@@ -1,5 +1,6 @@
 import { ModeToggle } from "@/components/mode-toggle";
 import { ExportDialog } from "@/components/export-dialog";
+import { QualityReview } from "@/components/quality-review";
 
 export function MainNav() {
   return (
@@ -9,6 +10,7 @@ export function MainNav() {
           <h1 className="text-xl font-bold">Tale Weaver</h1>
         </div>
         <div className="flex items-center gap-4">
+          <QualityReview />
           <ExportDialog />
           <ModeToggle />
         </div>

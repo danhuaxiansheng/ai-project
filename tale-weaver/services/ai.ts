@@ -5,6 +5,18 @@ export async function generateAIResponse(
   messages: { role: string; content: string }[]
 ) {
   try {
+    // 构建完整的消息历史，包括系统提示
+    const chatMessages = [
+      {
+        role: "system",
+        content: `${role.systemPrompt}\n\n你现在是${role.name}。请基于已有的对话内容继续对话。`,
+      },
+      ...messages.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      })),
+    ];
+
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: {
@@ -12,7 +24,7 @@ export async function generateAIResponse(
       },
       body: JSON.stringify({
         role,
-        messages,
+        messages: chatMessages,
       }),
     });
 
