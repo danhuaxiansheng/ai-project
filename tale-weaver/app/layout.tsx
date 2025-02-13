@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { StoryProvider } from "@/contexts/story-context";
+import { Toaster } from "@/components/ui/toaster";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -27,7 +29,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <StoryProvider>{children}</StoryProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
