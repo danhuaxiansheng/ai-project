@@ -1,9 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
-  optimizeFonts: true,
+  reactStrictMode: true,
+  transpilePackages: ["lucide-react"],
 };
 
 module.exports = nextConfig;
