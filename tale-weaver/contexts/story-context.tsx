@@ -19,7 +19,8 @@ type StoryAction =
   | { type: "SET_ROLE"; payload: Role | null }
   | { type: "ADD_MESSAGE"; payload: Message }
   | { type: "SET_LOADING"; payload: boolean }
-  | { type: "LOAD_MESSAGES"; payload: Message[] };
+  | { type: "LOAD_MESSAGES"; payload: Message[] }
+  | { type: "CLEAR_MESSAGES" };
 
 const initialState: StoryState = {
   selectedRole: null,
@@ -45,6 +46,9 @@ function storyReducer(state: StoryState, action: StoryAction): StoryState {
       return { ...state, isLoading: action.payload };
     case "LOAD_MESSAGES":
       return { ...state, messages: action.payload };
+    case "CLEAR_MESSAGES":
+      localStorage.removeItem("tale-weaver-messages");
+      return { ...state, messages: [] };
     default:
       return state;
   }

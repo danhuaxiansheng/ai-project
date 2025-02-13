@@ -6,13 +6,31 @@ import { Brain, MessageSquare, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStory } from "@/contexts/story-context";
 import { roles } from "@/types/role";
+import { ExportDialog } from "@/components/export-dialog";
 
 export function RoleSelector() {
   const { state, dispatch } = useStory();
 
+  const handleRoleSelect = (role: Role) => {
+    if (state.selectedRole?.id !== role.id) {
+      if (state.messages.length > 0) {
+        // 如果有对话历史，提示用户是否要切换角色
+        if (window.confirm("切换角色将清空当前对话历史，是否继续？")) {
+          dispatch({ type: "CLEAR_MESSAGES" });
+          dispatch({ type: "SET_ROLE", payload: role });
+        }
+      } else {
+        dispatch({ type: "SET_ROLE", payload: role });
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">选择 AI 角色</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">选择 AI 角色</h2>
+        <ExportDialog />
+      </div>
       <div className="space-y-2">
         {roles.map((role) => (
           <Card
@@ -21,7 +39,7 @@ export function RoleSelector() {
               "p-4 cursor-pointer transition-colors hover:bg-accent",
               state.selectedRole?.id === role.id && "border-primary"
             )}
-            onClick={() => dispatch({ type: "SET_ROLE", payload: role })}
+            onClick={() => handleRoleSelect(role)}
           >
             <div className="flex items-start gap-3">
               <div className="mt-1 text-primary">

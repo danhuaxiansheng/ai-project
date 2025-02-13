@@ -4,7 +4,7 @@ import * as React from "react";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Send } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import { ChatMessage } from "@/components/chat-message";
 import { useStory } from "@/contexts/story-context";
 import { generateAIResponse } from "@/services/ai";
@@ -14,6 +14,16 @@ export function StoryEditor() {
   const { state, dispatch } = useStory();
   const [content, setContent] = React.useState("");
   const { toast } = useToast();
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  // 自动滚动到最新消息
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  React.useEffect(() => {
+    scrollToBottom();
+  }, [state.messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,9 +67,16 @@ export function StoryEditor() {
   return (
     <Card className="flex flex-col h-[calc(100vh-8rem)]">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {state.messages.map((message, index) => (
+        {state.messages.map((message) => (
           <ChatMessage key={message.timestamp} {...message} />
         ))}
+        {state.isLoading && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>AI 正在思考...</span>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
       </div>
       <div className="border-t p-4">
         <form onSubmit={handleSubmit} className="flex gap-2">
@@ -72,14 +89,18 @@ export function StoryEditor() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="min-h-[80px]"
-            disabled={!state.selectedRole}
+            disabled={!state.selectedRole || state.isLoading}
           />
           <Button
             type="submit"
             className="self-end"
             disabled={state.isLoading || !content.trim() || !state.selectedRole}
           >
-            <Send className="h-4 w-4" />
+            {state.isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
             <span className="sr-only">发送</span>
           </Button>
         </form>
