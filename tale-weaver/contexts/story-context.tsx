@@ -2,28 +2,29 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import { Role } from "@/types/role";
-
-interface Message {
-  role: "assistant" | "user";
-  content: string;
-  timestamp: number;
-}
+import { Story, StorySession, StoryMessage } from "@/types/story";
+import { storyDB } from "@/lib/db";
 
 interface StoryState {
   selectedRole: Role | null;
-  messages: Message[];
+  currentStory: Story | null;
+  currentSession: StorySession | null;
+  messages: StoryMessage[];
   isLoading: boolean;
 }
 
 type StoryAction =
   | { type: "SET_ROLE"; payload: Role | null }
-  | { type: "ADD_MESSAGE"; payload: Message }
-  | { type: "SET_LOADING"; payload: boolean }
-  | { type: "LOAD_MESSAGES"; payload: Message[] }
-  | { type: "CLEAR_MESSAGES" };
+  | { type: "SET_STORY"; payload: Story }
+  | { type: "SET_SESSION"; payload: StorySession }
+  | { type: "ADD_MESSAGE"; payload: StoryMessage }
+  | { type: "SET_MESSAGES"; payload: StoryMessage[] }
+  | { type: "SET_LOADING"; payload: boolean };
 
 const initialState: StoryState = {
   selectedRole: null,
+  currentStory: null,
+  currentSession: null,
   messages: [],
   isLoading: false,
 };
@@ -37,18 +38,19 @@ function storyReducer(state: StoryState, action: StoryAction): StoryState {
   switch (action.type) {
     case "SET_ROLE":
       return { ...state, selectedRole: action.payload };
+    case "SET_STORY":
+      return { ...state, currentStory: action.payload };
+    case "SET_SESSION":
+      return { ...state, currentSession: action.payload };
     case "ADD_MESSAGE":
       const newMessages = [...state.messages, action.payload];
       // 保存到 localStorage
       localStorage.setItem("tale-weaver-messages", JSON.stringify(newMessages));
       return { ...state, messages: newMessages };
+    case "SET_MESSAGES":
+      return { ...state, messages: action.payload };
     case "SET_LOADING":
       return { ...state, isLoading: action.payload };
-    case "LOAD_MESSAGES":
-      return { ...state, messages: action.payload };
-    case "CLEAR_MESSAGES":
-      localStorage.removeItem("tale-weaver-messages");
-      return { ...state, messages: [] };
     default:
       return state;
   }
@@ -62,7 +64,7 @@ export function StoryProvider({ children }: { children: React.ReactNode }) {
     const savedMessages = localStorage.getItem("tale-weaver-messages");
     if (savedMessages) {
       dispatch({
-        type: "LOAD_MESSAGES",
+        type: "SET_MESSAGES",
         payload: JSON.parse(savedMessages),
       });
     }

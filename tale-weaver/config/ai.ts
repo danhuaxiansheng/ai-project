@@ -10,3 +10,8 @@ export const AI_CONFIG = {
 export const API_ENDPOINTS = {
   deepseek: "https://api.deepseek.com/v1/chat/completions",
 };
+
+// 验证环境变量
+if (!process.env.DEEPSEEK_API_KEY) {
+  throw new Error("DEEPSEEK_API_KEY is not set in environment variables");
+}

@@ -1,4 +1,5 @@
 import { AI_CONFIG, API_ENDPOINTS } from "@/config/ai";
+import { errorHandler } from "./error-handler";
 
 interface Message {
   role: "system" | "user" | "assistant";
@@ -6,12 +7,17 @@ interface Message {
 }
 
 export async function createChatCompletion(messages: Message[]) {
-  try {
+  return errorHandler.withRetry(async () => {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) {
+      throw new Error("DEEPSEEK_API_KEY is not configured");
+    }
+    debugger;
     const response = await fetch(API_ENDPOINTS.deepseek, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: AI_CONFIG.model,
@@ -23,16 +29,14 @@ export async function createChatCompletion(messages: Message[]) {
         presence_penalty: AI_CONFIG.presence_penalty,
       }),
     });
-
+    debugger;
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || "AI request failed");
+      error.status = response.status;
+      throw error;
     }
 
     const data = await response.json();
     return data.choices[0].message;
-  } catch (error) {
-    console.error("AI client error:", error);
-    throw error;
-  }
+  });
 }
