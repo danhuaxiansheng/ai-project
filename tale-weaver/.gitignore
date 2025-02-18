@@ -52,4 +52,12 @@ Thumbs.db
 /data/novel.db
 /data/vectors/
 
+# SQLite 数据库文件
+*.db
+*.db-journal
+
+# 构建文件
+public/data/*
+!public/data/.gitkeep
+
 .vercel

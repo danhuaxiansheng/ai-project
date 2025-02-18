@@ -1,3 +1,5 @@
+"use client";
+
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import { Story, StorySession, StoryMessage } from "@/types/story";
 
@@ -23,38 +25,55 @@ class CacheService {
   private db: IDBPDatabase<TaleWeaverDB> | null = null;
 
   async init() {
-    if (this.db) return;
+    if (typeof window === "undefined") return; // 服务端不初始化
 
-    this.db = await openDB<TaleWeaverDB>("tale-weaver", 1, {
-      upgrade(db) {
-        // 故事表
-        const storyStore = db.createObjectStore("stories", { keyPath: "id" });
-        storyStore.createIndex("by-updated", "updatedAt");
-
-        // 会话表
-        const sessionStore = db.createObjectStore("sessions", {
-          keyPath: "id",
-        });
-        sessionStore.createIndex("by-story", "storyId");
-
-        // 消息表
-        const messageStore = db.createObjectStore("messages", {
-          keyPath: "id",
-        });
-        messageStore.createIndex("by-session", "sessionId");
-      },
-    });
+    try {
+      this.db = await openDB<TaleWeaverDB>("tale-weaver-cache", 1, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("stories")) {
+            db.createObjectStore("stories", { keyPath: "id" });
+          }
+        },
+      });
+    } catch (error) {
+      console.error("Failed to initialize cache:", error);
+    }
   }
 
   // 故事相关操作
-  async cacheStory(story: Story) {
-    await this.init();
-    await this.db!.put("stories", story);
+  async cacheStory(story: Story): Promise<void> {
+    if (!this.db) {
+      await this.init();
+    }
+    if (!this.db) return;
+
+    try {
+      const store = this.db
+        .transaction("stories", "readwrite")
+        .objectStore("stories");
+      await store.put(story);
+    } catch (error) {
+      console.error("Failed to cache story:", error);
+    }
   }
 
   async getCachedStories(): Promise<Story[]> {
-    await this.init();
-    return this.db!.getAllFromIndex("stories", "by-updated");
+    if (!this.db) {
+      await this.init();
+    }
+    if (!this.db) return []; // 如果仍然没有 db，返回空数组
+
+    try {
+      const store = this.db
+        .transaction("stories", "readonly")
+        .objectStore("stories");
+      const stories = await store.getAll();
+      // 确保返回的是数组
+      return Array.isArray(stories) ? stories : [];
+    } catch (error) {
+      console.error("Failed to get cached stories:", error);
+      return [];
+    }
   }
 
   // 会话相关操作

@@ -12,7 +12,6 @@ export async function createChatCompletion(messages: Message[]) {
     if (!apiKey) {
       throw new Error("DEEPSEEK_API_KEY is not configured");
     }
-    debugger;
     const response = await fetch(API_ENDPOINTS.deepseek, {
       method: "POST",
       headers: {
@@ -29,7 +28,6 @@ export async function createChatCompletion(messages: Message[]) {
         presence_penalty: AI_CONFIG.presence_penalty,
       }),
     });
-    debugger;
     if (!response.ok) {
       const error = await response.json();
       error.status = response.status;

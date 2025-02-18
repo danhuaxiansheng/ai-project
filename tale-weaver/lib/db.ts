@@ -31,13 +31,13 @@ class StoryDB {
         // 缓存未命中，从服务器获取
         const response = await fetch("/api/db?action=getStories");
         if (!response.ok) throw new Error("Failed to get stories");
-        const stories = await response.json();
+        const resData = await response.json();
 
         // 缓存结果
         await Promise.all(
-          stories.map((story) => cacheService.cacheStory(story))
+          resData.stories.map((story) => cacheService.cacheStory(story))
         );
-        return stories;
+        return resData.stories;
       } catch (error) {
         console.error("Error fetching stories:", error);
         // 如果有缓存数据，在出错时返回缓存

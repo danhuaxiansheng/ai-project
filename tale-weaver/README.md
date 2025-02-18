@@ -1,4 +1,4 @@
-### **Tale Weaver - AI 小说创作助手**
+### **优化后的完整 AI 小说创作助手方案**
 
 ---
 
@@ -10,10 +10,11 @@
 2. **上下文持续性**：通过本地存储实现可靠的数据持久化
 3. **质量导向审核**：三级审核机制（逻辑一致性、文风匹配度、观赏度）
 4. **实时反馈闭环**：支持人工修改建议并实时更新 AI 输出
+5. **基础设定管理**：按照小说名称分类管理各类设定、大纲、章节等必要元素
 
 ---
 
-### **二、技术架构**
+#### **二、技术架构**
 
 ```mermaid
 graph TD
@@ -25,11 +26,12 @@ graph TD
     D --> G[DeepSeek API]
     E --> H[IndexedDB]
     F --> I[向量检索]
+    E --> J[基础设定管理]
 ```
 
 ---
 
-### **三、技术栈**
+#### **三、技术栈**
 
 | 模块      | 技术方案                   | 关键优势                   |
 | --------- | -------------------------- | -------------------------- |
@@ -42,7 +44,7 @@ graph TD
 
 ---
 
-### **四、核心功能**
+#### **四、核心功能**
 
 1. **多角色协作**
 
@@ -57,13 +59,55 @@ graph TD
    - 混合查询策略
 
 3. **质量控制**
+
    - 实时文本分析
    - 多维度评估
    - 修改建议生成
 
+4. **基础设定管理**
+
+   - 按照小说名称分类管理
+   - 各类设定、大纲、章节等必要元素
+
+   1. **数据结构**
+
+   ```typescript
+   // 基础设定数据结构
+   interface NovelSetting {
+     id: string; // UUID
+     title: string;
+     settings: {
+       worldview: string;
+       characterProfiles: Character[];
+       timeline: Event[];
+     };
+     outline: {
+       mainPlot: string;
+       subPlots: SubPlot[];
+     };
+     chapters: Chapter[];
+   }
+   ```
+
+   2. **功能模块**
+
+   ```mermaid
+   graph TD
+       A[基础设定管理] --> B[新增设定]
+       A --> C[编辑设定]
+       A --> D[删除设定]
+       A --> E[导入设定]
+       A --> F[导出设定]
+       B --> G[保存至IndexedDB]
+       C --> G
+       D --> H[从IndexedDB删除]
+       E --> I[解析导入文件]
+       F --> J[生成导出文件]
+   ```
+
 ---
 
-### **五、数据流设计**
+#### **五、数据流设计**
 
 ```mermaid
 sequenceDiagram
@@ -99,32 +143,7 @@ sequenceDiagram
 
 ---
 
-### **六、开发指南**
-
-1. **环境准备**
-
-````bash
-# 安装依赖
-pnpm install
-
-# 启动开发服务器
-pnpm dev
-
-# 配置环境变量
-cp .env.example .env.local
-
-2. **关键配置**
-```typescript
-// 配置 DeepSeek API
-DEEPSEEK_API_KEY=your_api_key
-
-// 配置数据目录
-DATA_DIR=/path/to/data
-````
-
----
-
-### **七、迭代路线**
+#### **六、迭代路线**
 
 1. **Phase 1**
 
@@ -139,25 +158,15 @@ DATA_DIR=/path/to/data
    - 优化 API 调用效率
 
 3. **Phase 3**
+
+   - 实现基础设定管理
+   - 按照小说名称分类管理
+   - 各类设定、大纲、章节等必要元素
+
+4. **Phase 4**
+
    - 添加协同编辑功能
    - 内置创作模板库
    - 实现自动备份系统
 
 ---
-
-### **八、注意事项**
-
-1. **数据存储**
-   - 定期备份 IndexedDB 数据
-   - 注意浏览器存储限制
-   - 及时清理无用数据
-
-#### **2. 记忆可视化组件**
-
-```typescript
-// 实现记忆图谱展示
-import { ForceGraph2D } from "react-force-graph";
-function MemoryGraph() {
-  return <ForceGraph2D graphData={formatMemories()} />;
-}
-```

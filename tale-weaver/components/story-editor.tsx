@@ -9,6 +9,7 @@ import { ChatMessage } from "@/components/chat-message";
 import { useStory } from "@/contexts/story-context";
 import { generateAIResponse } from "@/services/ai";
 import { useToast } from "@/hooks/use-toast";
+import { MemoryGraph } from "@/components/memory-graph";
 
 export function StoryEditor() {
   const { state, dispatch } = useStory();
@@ -65,46 +66,55 @@ export function StoryEditor() {
   };
 
   return (
-    <Card className="flex flex-col h-[calc(100vh-8rem)]">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {state.messages.map((message) => (
-          <ChatMessage key={message.timestamp} {...message} />
-        ))}
-        {state.isLoading && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>AI 正在思考...</span>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-      <div className="border-t p-4">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <Textarea
-            placeholder={
-              state.selectedRole
-                ? "在这里开始你的故事..."
-                : "请先选择一个 AI 角色"
-            }
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="min-h-[80px]"
-            disabled={!state.selectedRole || state.isLoading}
-          />
-          <Button
-            type="submit"
-            className="self-end"
-            disabled={state.isLoading || !content.trim() || !state.selectedRole}
-          >
-            {state.isLoading ? (
+    <div className="space-y-6">
+      <Card className="flex flex-col h-[calc(100vh-20rem)]">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {state.messages.map((message) => (
+            <ChatMessage key={message.timestamp} {...message} />
+          ))}
+          {state.isLoading && (
+            <div className="flex items-center gap-2 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-            <span className="sr-only">发送</span>
-          </Button>
-        </form>
+              <span>AI 正在思考...</span>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+        <div className="border-t p-4">
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <Textarea
+              placeholder={
+                state.selectedRole
+                  ? "在这里开始你的故事..."
+                  : "请先选择一个 AI 角色"
+              }
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="min-h-[80px]"
+              disabled={!state.selectedRole || state.isLoading}
+            />
+            <Button
+              type="submit"
+              className="self-end"
+              disabled={
+                state.isLoading || !content.trim() || !state.selectedRole
+              }
+            >
+              {state.isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              <span className="sr-only">发送</span>
+            </Button>
+          </form>
+        </div>
+      </Card>
+
+      <div className="bg-card rounded-lg p-4">
+        <h3 className="text-lg font-medium mb-4">记忆图谱</h3>
+        <MemoryGraph />
       </div>
-    </Card>
+    </div>
   );
 }

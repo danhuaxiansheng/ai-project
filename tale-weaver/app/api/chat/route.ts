@@ -17,8 +17,6 @@ export async function POST(req: NextRequest) {
         content: msg.content,
       })),
     ];
-
-    debugger;
     // 调用 AI API
     const aiResponse = await createChatCompletion(chatMessages);
 

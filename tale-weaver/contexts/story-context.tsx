@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import { Role } from "@/types/role";
 import { Story, StorySession, StoryMessage } from "@/types/story";
-import { storyDB } from "@/lib/db";
 
 interface StoryState {
   selectedRole: Role | null;

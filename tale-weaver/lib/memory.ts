@@ -1,149 +1,99 @@
-import { LanceDB } from "lancedb";
-import { Message } from "@/types/message";
-import { Database } from "better-sqlite3";
+import { createDbWorker } from "sql.js-httpvfs";
+import type { Message } from "@/types/message";
 import path from "path";
 
 interface MemoryRecord {
+  id: string;
   text: string;
   embedding: number[];
   timestamp: number;
   role: string;
   type: "story" | "dialogue" | "plot";
+  reference_id: string;
+  score: number;
 }
 
 export class MemorySystem {
-  private vectorDB: any;
-  private sqliteDB: Database;
+  private dbWorker: any;
 
   constructor() {
-    // 初始化 SQLite
-    this.sqliteDB = new Database(path.join(process.cwd(), "data/novel.db"));
-    this.initSQLite();
+    this.initDb();
   }
 
-  private async initSQLite() {
-    this.sqliteDB.exec(`
+  private async initDb() {
+    const workerUrl = path.join(
+      process.cwd(),
+      "node_modules/sql.js-httpvfs/dist/sqlite.worker.js"
+    );
+    const wasmUrl = path.join(
+      process.cwd(),
+      "node_modules/sql.js-httpvfs/dist/sql-wasm.wasm"
+    );
+
+    this.dbWorker = await createDbWorker(
+      [
+        {
+          from: "inline",
+          config: {
+            serverMode: "full",
+            url: "/data/memory.db",
+            requestChunkSize: 4096,
+          },
+        },
+      ],
+      workerUrl,
+      wasmUrl
+    );
+
+    // 初始化表结构
+    await this.dbWorker.db.exec(`
       CREATE TABLE IF NOT EXISTS memories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        content TEXT NOT NULL,
+        id TEXT PRIMARY KEY,
+        text TEXT NOT NULL,
+        embedding BLOB,
+        timestamp INTEGER NOT NULL,
         role TEXT NOT NULL,
         type TEXT NOT NULL,
-        timestamp INTEGER NOT NULL,
-        metadata TEXT
-      )
+        reference_id TEXT NOT NULL,
+        score REAL
+      );
+      
+      CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type);
+      CREATE INDEX IF NOT EXISTS idx_memories_reference ON memories(reference_id);
     `);
   }
 
-  async init() {
-    // 初始化 LanceDB
-    const db = await LanceDB.connect("data/lancedb");
-    this.vectorDB = await db.openTable("memories");
-    if (!this.vectorDB) {
-      this.vectorDB = await db.createTable("memories", {
-        text: "string",
-        embedding: "float32[384]",
-        timestamp: "int64",
-        role: "string",
-        type: "string",
-      });
-    }
+  async addMemory(memory: Omit<MemoryRecord, "id">) {
+    const id = crypto.randomUUID();
+    const { text, embedding, timestamp, role, type, reference_id, score } =
+      memory;
+    await this.dbWorker.db.run(
+      `INSERT INTO memories (id, text, embedding, timestamp, role, type, reference_id, score)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, text, embedding, timestamp, role, type, reference_id, score]
+    );
   }
 
-  async storeMemory(message: Message, type: "story" | "dialogue" | "plot") {
-    if (!this.vectorDB) await this.init();
-
-    const embedding = await this.generateEmbedding(message.content);
-    const record: MemoryRecord = {
-      text: message.content,
-      embedding,
-      timestamp: message.timestamp,
-      role: message.role,
-      type,
-    };
-
-    // 向量存储
-    await this.vectorDB.add([record]);
-
-    // 结构化存储
-    this.sqliteDB
-      .prepare(
-        `
-      INSERT INTO memories (content, role, type, timestamp, metadata)
-      VALUES (?, ?, ?, ?, ?)
-    `
-      )
-      .run(
-        message.content,
-        message.role,
-        type,
-        message.timestamp,
-        JSON.stringify({ embedding })
-      );
-  }
-
-  async searchRelatedMemories(
-    query: string,
-    type?: "story" | "dialogue" | "plot"
-  ) {
-    if (!this.vectorDB) await this.init();
-
-    const queryEmbedding = await this.generateEmbedding(query);
-
-    // 向量检索
-    const vectorResults = await this.vectorDB
-      .search(queryEmbedding)
-      .filter(type ? `type = '${type}'` : null)
-      .limit(5)
-      .execute();
-
-    // 关键词检索
-    const keywordResults = this.sqliteDB
-      .prepare(
-        `
-      SELECT * FROM memories 
-      WHERE content LIKE ? 
-      ${type ? "AND type = ?" : ""}
-      ORDER BY timestamp DESC 
-      LIMIT 5
-    `
-      )
-      .all(`%${query}%`, type);
-
-    return this.mergeAndDeduplicate(vectorResults, keywordResults);
-  }
-
-  private async generateEmbedding(text: string): Promise<number[]> {
-    // TODO: 使用 transformers.js 生成嵌入向量
-    return new Array(384).fill(0).map(() => Math.random());
-  }
-
-  private mergeAndDeduplicate(vectorResults: any[], keywordResults: any[]) {
-    const seen = new Set();
-    const merged = [...vectorResults, ...keywordResults].filter((item) => {
-      const key = item.text || item.content;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-
-    return merged.sort((a, b) => b.timestamp - a.timestamp);
+  async searchMemories(query: string, limit: number = 10) {
+    const result = await this.dbWorker.db.exec(
+      `SELECT * FROM memories 
+       ORDER BY timestamp DESC 
+       LIMIT ?`,
+      [limit]
+    );
+    return result[0]?.values || [];
   }
 
   async getMemoryStats() {
-    const stats = this.sqliteDB
-      .prepare(
-        `
+    const result = await this.dbWorker.db.exec(`
       SELECT 
         type,
         COUNT(*) as count,
-        AVG(LENGTH(content)) as avgLength
+        AVG(LENGTH(text)) as avgLength
       FROM memories 
       GROUP BY type
-    `
-      )
-      .all();
-
-    return stats;
+    `);
+    return result[0]?.values || [];
   }
 }
 

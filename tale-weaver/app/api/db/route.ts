@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/services/db";
+import { database } from "@/services/db";
 import { memorySystem } from "@/services/memory";
 
 export async function GET(req: NextRequest) {
@@ -9,33 +9,37 @@ export async function GET(req: NextRequest) {
   const query = searchParams.get("query");
 
   try {
+    if (typeof window === "undefined") {
+      return NextResponse.json({ stories: [] });
+    }
+
     switch (action) {
       case "getStories": {
-        const stories = await db.getStories();
-        return NextResponse.json(stories);
+        const stories = await database.getStories();
+        return NextResponse.json({ stories: stories || [] });
       }
 
       case "getStorySessions": {
         if (!id) throw new Error("缺少故事 ID");
-        const sessions = await db.getStorySessions(id);
+        const sessions = await database.getStorySessions(id);
         return NextResponse.json(sessions);
       }
 
       case "getSessionMessages": {
         if (!id) throw new Error("缺少会话 ID");
-        const messages = await db.getSessionMessages(id);
+        const messages = await database.getSessionMessages(id);
         return NextResponse.json(messages);
       }
 
       case "getStoryWithSessions": {
         if (!id) throw new Error("缺少故事 ID");
-        const data = await db.getStoryWithSessions(id);
+        const data = await database.getStoryWithSessions(id);
         return NextResponse.json(data);
       }
 
       case "getSessionWithMessages": {
         if (!id) throw new Error("缺少会话 ID");
-        const data = await db.getSessionWithMessages(id);
+        const data = await database.getSessionWithMessages(id);
         return NextResponse.json(data);
       }
 
@@ -45,18 +49,26 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(context);
       }
 
+      case "getNovelSettings": {
+        if (!id) throw new Error("缺少小说 ID");
+        const settings = await database.getNovelSettings(id);
+        return NextResponse.json(settings);
+      }
+
+      case "getChapters": {
+        if (!id) throw new Error("缺少小说 ID");
+        const chapters = await database.getChapters(id);
+        return NextResponse.json(chapters);
+      }
+
       default:
         return NextResponse.json({ error: "无效的操作" }, { status: 400 });
     }
   } catch (error: any) {
     console.error("API 错误:", error);
     return NextResponse.json(
-      {
-        error: error.message,
-        details:
-          process.env.NODE_ENV === "development" ? error.stack : undefined,
-      },
-      { status: 500 }
+      { error: error.message, stories: [] },
+      { status: error.status || 500 }
     );
   }
 }
@@ -67,17 +79,22 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case "createStory": {
-        await db.createStory(data);
+        await database.createStory(data);
         return NextResponse.json({ success: true });
       }
 
       case "createSession": {
-        await db.createSession(data);
+        await database.createSession(data);
         return NextResponse.json({ success: true });
       }
 
       case "addMessage": {
-        await db.addMessage(data);
+        await database.addMessage(data);
+        return NextResponse.json({ success: true });
+      }
+
+      case "saveStory": {
+        await database.saveStory(data);
         return NextResponse.json({ success: true });
       }
 
