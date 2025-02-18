@@ -1,76 +1,48 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, useEffect } from "react";
-import { Role } from "@/types/role";
-import { Story, StorySession, StoryMessage } from "@/types/story";
+import { createContext, useContext, useState, useCallback } from "react";
+import { Story } from "@/types/story";
+import { database } from "@/services/db";
 
-interface StoryState {
-  selectedRole: Role | null;
+interface StoryContextType {
+  stories: Story[];
   currentStory: Story | null;
-  currentSession: StorySession | null;
-  messages: StoryMessage[];
-  isLoading: boolean;
+  setCurrentStory: (story: Story | null) => void;
+  refreshStories: () => Promise<void>;
 }
 
-type StoryAction =
-  | { type: "SET_ROLE"; payload: Role | null }
-  | { type: "SET_STORY"; payload: Story }
-  | { type: "SET_SESSION"; payload: StorySession }
-  | { type: "ADD_MESSAGE"; payload: StoryMessage }
-  | { type: "SET_MESSAGES"; payload: StoryMessage[] }
-  | { type: "SET_LOADING"; payload: boolean };
-
-const initialState: StoryState = {
-  selectedRole: null,
-  currentStory: null,
-  currentSession: null,
-  messages: [],
-  isLoading: false,
-};
-
-const StoryContext = createContext<{
-  state: StoryState;
-  dispatch: React.Dispatch<StoryAction>;
-} | null>(null);
-
-function storyReducer(state: StoryState, action: StoryAction): StoryState {
-  switch (action.type) {
-    case "SET_ROLE":
-      return { ...state, selectedRole: action.payload };
-    case "SET_STORY":
-      return { ...state, currentStory: action.payload };
-    case "SET_SESSION":
-      return { ...state, currentSession: action.payload };
-    case "ADD_MESSAGE":
-      const newMessages = [...state.messages, action.payload];
-      // 保存到 localStorage
-      localStorage.setItem("tale-weaver-messages", JSON.stringify(newMessages));
-      return { ...state, messages: newMessages };
-    case "SET_MESSAGES":
-      return { ...state, messages: action.payload };
-    case "SET_LOADING":
-      return { ...state, isLoading: action.payload };
-    default:
-      return state;
-  }
-}
+const StoryContext = createContext<StoryContextType | undefined>(undefined);
 
 export function StoryProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(storyReducer, initialState);
+  const [stories, setStories] = useState<Story[]>([]);
+  const [currentStory, setCurrentStory] = useState<Story | null>(null);
 
-  // 从 localStorage 加载历史记录
-  useEffect(() => {
-    const savedMessages = localStorage.getItem("tale-weaver-messages");
-    if (savedMessages) {
-      dispatch({
-        type: "SET_MESSAGES",
-        payload: JSON.parse(savedMessages),
-      });
+  const refreshStories = useCallback(async () => {
+    try {
+      const fetchedStories = await database.getStories();
+      setStories(fetchedStories);
+
+      // 如果当前故事不在列表中，重置当前故事
+      if (
+        currentStory &&
+        !fetchedStories.find((s) => s.id === currentStory.id)
+      ) {
+        setCurrentStory(null);
+      }
+    } catch (error) {
+      console.error("Failed to refresh stories:", error);
     }
-  }, []);
+  }, [currentStory]);
 
   return (
-    <StoryContext.Provider value={{ state, dispatch }}>
+    <StoryContext.Provider
+      value={{
+        stories,
+        currentStory,
+        setCurrentStory,
+        refreshStories,
+      }}
+    >
       {children}
     </StoryContext.Provider>
   );
@@ -79,7 +51,7 @@ export function StoryProvider({ children }: { children: React.ReactNode }) {
 export function useStory() {
   const context = useContext(StoryContext);
   if (!context) {
-    throw new Error("useStory must be used within a StoryProvider");
+    throw new Error("useStory must be used within StoryProvider");
   }
   return context;
 }

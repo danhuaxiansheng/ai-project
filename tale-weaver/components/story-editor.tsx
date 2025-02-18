@@ -1,120 +1,151 @@
 "use client";
 
-import * as React from "react";
-import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Send, Loader2 } from "lucide-react";
-import { ChatMessage } from "@/components/chat-message";
+import { useState, useEffect, useRef } from "react";
 import { useStory } from "@/contexts/story-context";
-import { generateAIResponse } from "@/services/ai";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+import { Loader2, Send } from "lucide-react";
+import { database } from "@/services/db";
+import { Message } from "@/types/story";
 import { MemoryGraph } from "@/components/memory-graph";
 
 export function StoryEditor() {
-  const { state, dispatch } = useStory();
-  const [content, setContent] = React.useState("");
+  const { currentStory } = useStory();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
-  // 自动滚动到最新消息
+  // 加载消息历史
+  useEffect(() => {
+    async function loadMessages() {
+      if (!currentStory) return;
+
+      try {
+        const storyMessages = await database.getStoryMessages(currentStory.id);
+        setMessages(storyMessages);
+      } catch (error) {
+        console.error("Failed to load messages:", error);
+        toast({
+          title: "错误",
+          description: "加载消息失败",
+          variant: "destructive",
+        });
+      }
+    }
+
+    loadMessages();
+  }, [currentStory, toast]);
+
+  // 自动滚动到底部
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     scrollToBottom();
-  }, [state.messages]);
+  }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() || state.isLoading || !state.selectedRole) return;
-
-    const userMessage = {
-      role: "user",
-      content: content.trim(),
-      timestamp: Date.now(),
-    };
-
-    dispatch({ type: "ADD_MESSAGE", payload: userMessage });
-    setContent("");
-    dispatch({ type: "SET_LOADING", payload: true });
+    if (!currentStory || !input.trim() || isLoading) return;
 
     try {
-      const aiResponse = await generateAIResponse(state.selectedRole, [
-        ...state.messages,
-        userMessage,
-      ]);
+      setIsLoading(true);
 
-      dispatch({
-        type: "ADD_MESSAGE",
-        payload: {
-          ...aiResponse,
-          timestamp: Date.now(),
-        },
-      });
+      // 创建用户消息
+      const userMessage: Message = {
+        id: crypto.randomUUID(),
+        storyId: currentStory.id,
+        role: "user",
+        content: input.trim(),
+        timestamp: Date.now(),
+      };
+
+      // 保存用户消息
+      await database.addMessage(userMessage);
+      setMessages((prev) => [...prev, userMessage]);
+      setInput("");
+
+      // TODO: 获取 AI 响应
+      const aiMessage: Message = {
+        id: crypto.randomUUID(),
+        storyId: currentStory.id,
+        role: "assistant",
+        content: "这是一个示例回复。实际开发中需要接入 AI API。",
+        timestamp: Date.now(),
+      };
+
+      // 保存 AI 消息
+      await database.addMessage(aiMessage);
+      setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Failed to send message:", error);
       toast({
-        variant: "destructive",
         title: "错误",
-        description: "生成回应时出现错误，请稍后重试",
+        description: "发送消息失败",
+        variant: "destructive",
       });
     } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
+      setIsLoading(false);
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <Card className="flex flex-col h-[calc(100vh-20rem)]">
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {state.messages.map((message) => (
-            <ChatMessage key={message.timestamp} {...message} />
-          ))}
-          {state.isLoading && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>AI 正在思考...</span>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-        <div className="border-t p-4">
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <Textarea
-              placeholder={
-                state.selectedRole
-                  ? "在这里开始你的故事..."
-                  : "请先选择一个 AI 角色"
-              }
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="min-h-[80px]"
-              disabled={!state.selectedRole || state.isLoading}
-            />
-            <Button
-              type="submit"
-              className="self-end"
-              disabled={
-                state.isLoading || !content.trim() || !state.selectedRole
-              }
-            >
-              {state.isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-              <span className="sr-only">发送</span>
-            </Button>
-          </form>
-        </div>
-      </Card>
-
-      <div className="bg-card rounded-lg p-4">
-        <h3 className="text-lg font-medium mb-4">记忆图谱</h3>
-        <MemoryGraph />
+  if (!currentStory) {
+    return (
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        请先选择或创建一个故事
       </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex ${
+              message.role === "user" ? "justify-end" : "justify-start"
+            }`}
+          >
+            <div
+              className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                message.role === "user"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted"
+              }`}
+            >
+              {message.content}
+            </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <form onSubmit={handleSubmit} className="border-t p-4">
+        <div className="flex gap-2">
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="输入你的想法..."
+            className="min-h-[80px]"
+          />
+          <Button
+            type="submit"
+            size="icon"
+            disabled={!input.trim() || isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

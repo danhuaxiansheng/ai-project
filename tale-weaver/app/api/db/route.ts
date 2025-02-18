@@ -98,6 +98,24 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true });
       }
 
+      case "updateNovelSettings": {
+        const { novelId, settings } = data;
+        const result = await database.updateNovelSettings(novelId, settings);
+        return NextResponse.json(result);
+      }
+
+      case "rollbackSetting": {
+        const { settingId, version } = data;
+        const result = await database.rollbackSetting(settingId, version);
+        return NextResponse.json(result);
+      }
+
+      case "updateSettingTags": {
+        const { settingId, tags } = data;
+        const result = await database.updateSettingTags(settingId, tags);
+        return NextResponse.json(result);
+      }
+
       default:
         return NextResponse.json({ error: "无效的操作" }, { status: 400 });
     }

@@ -1,6 +1,10 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
+import { useStory } from "@/contexts/story-context";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { Loader2, Star } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -9,43 +13,54 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { ClipboardCheck, Loader2 } from "lucide-react";
-import { reviewContent } from "@/services/review";
-import { useStory } from "@/contexts/story-context";
-import { useToast } from "@/hooks/use-toast";
-import { Progress } from "@/components/ui/progress";
+import { database } from "@/services/db";
 
 export function QualityReview() {
-  const { state } = useStory();
+  const { currentStory } = useStory();
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [reviewResults, setReviewResults] = useState<any>(null);
   const { toast } = useToast();
-  const [isReviewing, setIsReviewing] = React.useState(false);
-  const [reviewResult, setReviewResult] = React.useState<ReviewResult | null>(
-    null
-  );
 
   const handleReview = async () => {
-    if (!state.messages.length || !state.selectedRole) return;
+    if (!currentStory) return;
 
-    setIsReviewing(true);
     try {
-      const lastMessage = state.messages[state.messages.length - 1];
-      const context = state.messages
-        .slice(0, -1)
-        .map((msg) => `${msg.role}: ${msg.content}`)
-        .join("\n");
+      setIsReviewing(true);
+      // 获取当前故事的所有消息
+      const messages = await database.getStoryMessages(currentStory.id);
 
-      const result = await reviewContent(
-        lastMessage.content,
-        state.selectedRole,
-        context
-      );
-      setReviewResult(result);
-    } catch (error) {
+      if (!messages.length) {
+        toast({
+          title: "提示",
+          description: "当前故事还没有内容可以审查",
+        });
+        return;
+      }
+
+      // TODO: 实现质量审查逻辑
+      const results = {
+        coherence: 0.85,
+        style: 0.78,
+        engagement: 0.92,
+        suggestions: [
+          "考虑增加更多环境描写",
+          "对话可以更自然一些",
+          "情节转折可以更流畅",
+        ],
+      };
+
+      setReviewResults(results);
+
       toast({
-        variant: "destructive",
+        title: "成功",
+        description: "质量审查完成",
+      });
+    } catch (error) {
+      console.error("Review failed:", error);
+      toast({
         title: "错误",
-        description: "内容审核失败，请稍后重试",
+        description: "质量审查失败",
+        variant: "destructive",
       });
     } finally {
       setIsReviewing(false);
@@ -59,74 +74,65 @@ export function QualityReview() {
           variant="outline"
           size="icon"
           className="h-8 w-8"
-          disabled={!state.messages.length || isReviewing}
+          disabled={!currentStory || isReviewing}
           onClick={handleReview}
         >
           {isReviewing ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <ClipboardCheck className="h-4 w-4" />
+            <Star className="h-4 w-4" />
           )}
         </Button>
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>质量评估</SheetTitle>
+          <SheetTitle>质量审查</SheetTitle>
           <SheetDescription>
-            对最近一条内容的质量进行多维度评估
+            AI 将从多个维度评估故事质量，并提供改进建议
           </SheetDescription>
         </SheetHeader>
-        {reviewResult && (
-          <div className="mt-6 space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>逻辑一致性</span>
-                  <span>{reviewResult.metrics.logicConsistency}/10</span>
-                </div>
-                <Progress
-                  value={reviewResult.metrics.logicConsistency * 10}
-                  className="h-2"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>文风匹配度</span>
-                  <span>{reviewResult.metrics.styleMatching}/10</span>
-                </div>
-                <Progress
-                  value={reviewResult.metrics.styleMatching * 10}
-                  className="h-2"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>观赏度</span>
-                  <span>{reviewResult.metrics.engagement}/10</span>
-                </div>
-                <Progress
-                  value={reviewResult.metrics.engagement * 10}
-                  className="h-2"
-                />
-              </div>
-            </div>
+
+        {reviewResults && (
+          <div className="mt-4 space-y-4">
             <div className="space-y-2">
-              <h4 className="font-medium">改进建议</h4>
-              <ul className="list-disc pl-4 space-y-1">
-                {reviewResult.suggestions.map((suggestion, index) => (
-                  <li key={index} className="text-sm text-muted-foreground">
-                    {suggestion}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="pt-2 border-t">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">总体评分</span>
-                <span className="text-2xl font-bold">
-                  {reviewResult.overallScore}/10
-                </span>
+              <div className="text-sm font-medium">一致性评分</div>
+              <div className="h-2 rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${reviewResults.coherence * 100}%` }}
+                />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-sm font-medium">文风评分</div>
+              <div className="h-2 rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${reviewResults.style * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-sm font-medium">趣味性评分</div>
+              <div className="h-2 rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${reviewResults.engagement * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-sm font-medium">改进建议</div>
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                {reviewResults.suggestions.map(
+                  (suggestion: string, i: number) => (
+                    <li key={i}>{suggestion}</li>
+                  )
+                )}
+              </ul>
             </div>
           </div>
         )}

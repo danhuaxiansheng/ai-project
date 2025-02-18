@@ -10,6 +10,8 @@ const nextConfig = {
     config.resolve.fallback = {
       ...config.resolve.fallback,
       worker_threads: false,
+      fs: false,
+      path: false,
     };
 
     return config;

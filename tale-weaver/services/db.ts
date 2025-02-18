@@ -2,27 +2,48 @@ import { db } from "@/lib/db-schema";
 import { Story, StorySession, StoryMessage } from "@/types/story";
 import { cacheService } from "@/lib/cache";
 import { errorHandler } from "@/lib/error-handler";
-import { NovelSetting } from "@/types/novel-setting";
+import { NovelSetting, NovelSettingHistory } from "@/types/novel-setting";
 
 export class DatabaseService {
+  private isClient: boolean;
+
+  constructor() {
+    this.isClient = typeof window !== "undefined";
+  }
+
   // 故事相关操作
   async createStory(story: Story) {
-    await db.stories.add(story);
-    await cacheService.cacheStory(story);
+    if (!this.isClient) return;
+
+    try {
+      // 添加到数据库
+      await db.stories.add(story);
+      // 更新缓存
+      await cacheService.cacheStory(story);
+      // 返回创建的故事对象
+      return story;
+    } catch (error) {
+      console.error("Error creating story:", error);
+      throw error;
+    }
   }
 
   async getStories(): Promise<Story[]> {
-    if (typeof window === "undefined") {
+    if (!this.isClient) {
       return []; // 服务端返回空数组
     }
 
     try {
-      const stories = await cacheService.getCachedStories();
-      // 确保返回的是数组
-      if (!Array.isArray(stories)) {
-        console.warn("Stories is not an array:", stories);
-        return [];
+      // 先尝试从缓存获取
+      const cachedStories = await cacheService.getCachedStories();
+      if (Array.isArray(cachedStories) && cachedStories.length > 0) {
+        return cachedStories;
       }
+
+      // 如果缓存为空，从数据库获取
+      const stories = await db.stories.toArray();
+      // 更新缓存
+      await cacheService.cacheStory(stories);
       return stories;
     } catch (error) {
       console.error("Error fetching stories:", error);
@@ -137,6 +158,82 @@ export class DatabaseService {
       if (!response.ok) throw new Error("获取章节列表失败");
       return response.json();
     });
+  }
+
+  // 设定版本控制
+  async createSettingVersion(setting: NovelSetting) {
+    const history: NovelSettingHistory = {
+      id: crypto.randomUUID(),
+      settingId: setting.id,
+      version: setting.version,
+      changes: setting,
+      createdAt: Date.now(),
+      createdBy: "system", // 后续可以改为实际用户
+    };
+
+    await db.settingHistory.add(history);
+    return history;
+  }
+
+  async getSettingHistory(settingId: string) {
+    return await db.settingHistory
+      .where("settingId")
+      .equals(settingId)
+      .reverse()
+      .sortBy("version");
+  }
+
+  async rollbackSetting(settingId: string, version: number) {
+    const history = await db.settingHistory
+      .where({ settingId, version })
+      .first();
+
+    if (!history) {
+      throw new Error("版本不存在");
+    }
+
+    const setting = await db.settings.get(settingId);
+    if (!setting) {
+      throw new Error("设定不存在");
+    }
+
+    const updatedSetting = {
+      ...setting,
+      ...history.changes,
+      version: setting.version + 1,
+      updatedAt: Date.now(),
+    };
+
+    await db.settings.put(updatedSetting);
+    await this.createSettingVersion(updatedSetting);
+
+    return updatedSetting;
+  }
+
+  // 标签管理
+  async updateSettingTags(settingId: string, tags: string[]) {
+    const setting = await db.settings.get(settingId);
+    if (!setting) {
+      throw new Error("设定不存在");
+    }
+
+    const updatedSetting = {
+      ...setting,
+      tags,
+      version: setting.version + 1,
+      updatedAt: Date.now(),
+    };
+
+    await db.settings.put(updatedSetting);
+    await this.createSettingVersion(updatedSetting);
+
+    return updatedSetting;
+  }
+
+  async searchSettingsByTag(tag: string) {
+    return await db.settings
+      .filter((setting) => setting.tags.includes(tag))
+      .toArray();
   }
 }
 
