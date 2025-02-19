@@ -1,93 +1,74 @@
-import { storyDB } from "./db";
+import { db } from "@/lib/db-schema";
+import { cacheService } from "./cache";
+import { Story } from "@/types/story";
+import { StorySession } from "@/types/session";
+import { StoryMessage } from "@/types/message";
 
-class SyncManager {
-  private syncInterval: number = 5 * 60 * 1000; // 5分钟
-  private intervalId: NodeJS.Timeout | null = null;
-  private isOnline: boolean = true;
-  private pendingSync: boolean = false;
+export class SyncManager {
+  private isClient: boolean;
 
   constructor() {
-    if (typeof window !== "undefined") {
-      // 监听在线状态
-      window.addEventListener("online", this.handleOnline);
-      window.addEventListener("offline", this.handleOffline);
-      // 监听页面关闭
-      window.addEventListener("beforeunload", this.handleBeforeUnload);
-      // 初始化在线状态
-      this.isOnline = navigator.onLine;
-    }
+    this.isClient = typeof window !== "undefined";
   }
 
-  start() {
-    if (this.intervalId) return;
-    this.intervalId = setInterval(this.sync, this.syncInterval);
-    // 立即执行一次同步
-    this.sync();
+  async clearCache() {
+    if (!this.isClient) return;
+    return cacheService.clearCache();
   }
 
-  stop() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
-  }
-
-  private handleOnline = async () => {
-    this.isOnline = true;
-    if (this.pendingSync) {
-      await this.sync();
-    }
-  };
-
-  private handleOffline = () => {
-    this.isOnline = false;
-    this.pendingSync = true;
-  };
-
-  private handleBeforeUnload = async (event: BeforeUnloadEvent) => {
-    if (this.pendingSync) {
-      event.preventDefault();
-      event.returnValue = "有未保存的更改，确定要离开吗？";
-      try {
-        await this.sync();
-      } catch (error) {
-        console.error("Error syncing before unload:", error);
-      }
-    }
-  };
-
-  private sync = async () => {
-    if (!this.isOnline) {
-      this.pendingSync = true;
-      return;
-    }
+  async syncCache() {
+    if (!this.isClient) return;
 
     try {
-      await storyDB.syncCache();
-      this.pendingSync = false;
+      // 从缓存获取数据
+      const stories = await cacheService.getCachedStories();
+      const sessions = await Promise.all(
+        stories.map((story) => cacheService.getCachedSessions(story.id))
+      ).then((sessions) => sessions.flat());
+      const messages = await Promise.all(
+        sessions.map((session) => cacheService.getCachedMessages(session.id))
+      ).then((messages) => messages.flat());
+
+      // 批量同步到 IndexedDB
+      await Promise.all([
+        ...stories.map((story) => this.syncStory(story)),
+        ...sessions.map((session) => this.syncSession(session)),
+        ...messages.map((message) => this.syncMessage(message)),
+      ]);
     } catch (error) {
-      console.error("Sync failed:", error);
-      this.pendingSync = true;
+      console.error("Error syncing cache:", error);
+      // 不抛出错误，让应用继续运行
+      console.warn("继续运行，但同步可能不完整");
     }
-  };
-
-  // 手动触发同步
-  async forceSyncNow() {
-    return this.sync();
   }
 
-  // 检查是否有未同步的更改
-  hasPendingChanges() {
-    return this.pendingSync;
+  private async syncStory(story: Story) {
+    if (!this.isClient || !db) return;
+
+    try {
+      await db.stories.put(story);
+    } catch (error) {
+      console.warn("Error syncing story:", story.id, error);
+    }
   }
 
-  // 清理事件监听器
-  destroy() {
-    this.stop();
-    if (typeof window !== "undefined") {
-      window.removeEventListener("online", this.handleOnline);
-      window.removeEventListener("offline", this.handleOffline);
-      window.removeEventListener("beforeunload", this.handleBeforeUnload);
+  private async syncSession(session: StorySession) {
+    if (!this.isClient) return;
+
+    try {
+      await db.sessions.put(session); // 使用 put 替代 add
+    } catch (error) {
+      console.warn("Error syncing session:", session.id, error);
+    }
+  }
+
+  private async syncMessage(message: StoryMessage) {
+    if (!this.isClient) return;
+
+    try {
+      await db.messages.put(message); // 使用 put 替代 add
+    } catch (error) {
+      console.warn("Error syncing message:", message.id, error);
     }
   }
 }

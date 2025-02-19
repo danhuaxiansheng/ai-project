@@ -35,7 +35,9 @@
     "sql.js": "^1.9.0",
     "sql.js-httpvfs": "^0.8.12",
     "tailwind-merge": "^2.2.1",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "@radix-ui/react-accordion": "^1.1.2",
+    "@radix-ui/react-scroll-area": "^1.0.4"
   },
   "devDependencies": {
     "@types/d3-force": "^3.0.0",

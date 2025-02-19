@@ -14,7 +14,6 @@ export class CacheService {
 
   private async initCache() {
     if (typeof window === "undefined") return;
-
     try {
       // 确保缓存表存在
       await db.cache.count();

@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 import { Story } from "@/types/story";
 import { database } from "@/services/db";
 
@@ -16,23 +22,31 @@ const StoryContext = createContext<StoryContextType | undefined>(undefined);
 export function StoryProvider({ children }: { children: React.ReactNode }) {
   const [stories, setStories] = useState<Story[]>([]);
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const refreshStories = useCallback(async () => {
+    if (!isInitialized) return;
     try {
       const fetchedStories = await database.getStories();
       setStories(fetchedStories);
-
-      // 如果当前故事不在列表中，重置当前故事
-      if (
-        currentStory &&
-        !fetchedStories.find((s) => s.id === currentStory.id)
-      ) {
-        setCurrentStory(null);
-      }
+      setCurrentStory((current) => {
+        if (!current) return null;
+        return fetchedStories.find((s) => s.id === current.id) || null;
+      });
     } catch (error) {
       console.error("Failed to refresh stories:", error);
     }
-  }, [currentStory]);
+  }, [isInitialized]);
+
+  // 只在组件挂载时初始化一次
+  useEffect(() => {
+    const init = async () => {
+      const fetchedStories = await database.getStories();
+      setStories(fetchedStories);
+      setIsInitialized(true);
+    };
+    init();
+  }, []);
 
   return (
     <StoryContext.Provider

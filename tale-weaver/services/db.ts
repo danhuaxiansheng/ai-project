@@ -3,6 +3,8 @@ import { Story, StorySession, StoryMessage } from "@/types/story";
 import { cacheService } from "@/lib/cache";
 import { errorHandler } from "@/lib/error-handler";
 import { NovelSetting, NovelSettingHistory } from "@/types/novel-setting";
+import { WorldSetting } from "@/types/worldbuilding";
+import Dexie from "dexie";
 
 export class DatabaseService {
   private isClient: boolean;
@@ -16,10 +18,12 @@ export class DatabaseService {
     if (!this.isClient) return;
 
     try {
+      console.log("Creating story:", story);
       // 添加到数据库
       await db.stories.add(story);
       // 更新缓存
       await cacheService.cacheStory(story);
+      console.log("Story created successfully");
       // 返回创建的故事对象
       return story;
     } catch (error) {
@@ -29,24 +33,20 @@ export class DatabaseService {
   }
 
   async getStories(): Promise<Story[]> {
-    if (!this.isClient) {
-      return []; // 服务端返回空数组
-    }
+    // 如果是服务器端，直接返回空数组
+    if (!this.isClient) return [];
 
     try {
       // 先尝试从缓存获取
       const cachedStories = await cacheService.getCachedStories();
-      if (Array.isArray(cachedStories) && cachedStories.length > 0) {
+      if (cachedStories.length > 0) {
         return cachedStories;
       }
-
-      // 如果缓存为空，从数据库获取
+      // 从数据库获取
       const stories = await db.stories.toArray();
-      // 更新缓存
-      await cacheService.cacheStory(stories);
       return stories;
     } catch (error) {
-      console.error("Error fetching stories:", error);
+      console.error("Error getting stories:", error);
       return [];
     }
   }
@@ -65,6 +65,7 @@ export class DatabaseService {
   }
 
   async getStorySessions(storyId: string) {
+    debugger;
     return await db.sessions
       .filter((session) => session.storyId === storyId)
       .toArray();
@@ -80,7 +81,19 @@ export class DatabaseService {
 
   // 消息相关操作
   async addMessage(message: StoryMessage) {
-    await db.messages.add(message);
+    if (!this.isClient || !db) return;
+
+    try {
+      const messageWithTimestamp = {
+        ...message,
+        timestamp: message.timestamp || Date.now(),
+      };
+      await db.messages.add(messageWithTimestamp);
+      return messageWithTimestamp;
+    } catch (error) {
+      console.error("Error adding message:", error);
+      throw error;
+    }
   }
 
   async getSessionMessages(sessionId: string) {
@@ -126,29 +139,69 @@ export class DatabaseService {
 
   // 新增：获取小说设定
   async getNovelSettings(novelId: string) {
-    return errorHandler.withRetry(async () => {
-      const response = await fetch(
-        `/api/db?action=getNovelSettings&id=${novelId}`
-      );
-      if (!response.ok) throw new Error("获取小说设定失败");
-      return response.json();
-    });
+    if (!this.isClient) return null;
+
+    try {
+      // 确保 novelId 存在且有效
+      if (!novelId) {
+        throw new Error("无效的小说 ID");
+      }
+
+      // 从数据库获取设置
+      const settings = await db.settings
+        .where("novelId")
+        .equals(novelId)
+        .first();
+
+      // 如果没有找到设置，返回空对象
+      if (!settings) {
+        // 创建默认设置
+        const defaultSettings = {
+          id: crypto.randomUUID(),
+          novelId,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          geography: { regions: [] },
+          society: { cultures: [] },
+          powerSystem: { rules: [], artifacts: [] },
+        };
+
+        // 保存默认设置
+        await db.settings.add(defaultSettings);
+        return defaultSettings;
+      }
+
+      return settings;
+    } catch (error) {
+      console.error("获取小说设置失败:", error);
+      throw error;
+    }
   }
 
   // 新增：更新小说设定
-  async updateNovelSettings(novelId: string, settings: Partial<NovelSetting>) {
-    return errorHandler.withRetry(async () => {
-      const response = await fetch("/api/db", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "updateNovelSettings",
-          data: { novelId, settings },
-        }),
-      });
-      if (!response.ok) throw new Error("更新小说设定失败");
-      return response.json();
-    });
+  async updateNovelSettings(novelId: string, settings: any) {
+    if (!this.isClient) return;
+
+    try {
+      const existingSettings = await this.getNovelSettings(novelId);
+      if (existingSettings) {
+        await db.settings.update(existingSettings.id, {
+          ...settings,
+          updatedAt: Date.now(),
+        });
+      } else {
+        await db.settings.add({
+          ...settings,
+          id: crypto.randomUUID(),
+          novelId,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+      }
+    } catch (error) {
+      console.error("更新小说设置失败:", error);
+      throw error;
+    }
   }
 
   // 新增：获取章节列表
@@ -233,6 +286,62 @@ export class DatabaseService {
   async searchSettingsByTag(tag: string) {
     return await db.settings
       .filter((setting) => setting.tags.includes(tag))
+      .toArray();
+  }
+
+  async getStoryMessages(storyId: string) {
+    if (!this.isClient || !db) return [];
+    try {
+      return await db.messages
+        .where("[storyId+timestamp]")
+        .between([storyId, Dexie.minKey], [storyId, Dexie.maxKey])
+        .reverse()
+        .toArray();
+    } catch (error) {
+      console.error("Error getting story messages:", error);
+      throw error;
+    }
+  }
+
+  // 世界观设定相关方法
+  async createWorldSetting(setting: WorldSetting) {
+    if (!this.isClient) return;
+    return await db.settings.add(setting);
+  }
+
+  async getWorldSetting(storyId: string) {
+    if (!this.isClient) return null;
+    return await db.settings.get(storyId);
+  }
+
+  async updateWorldSetting(setting: WorldSetting) {
+    if (!this.isClient) return;
+    return await db.settings.put(setting);
+  }
+
+  async deleteWorldSetting(storyId: string) {
+    if (!this.isClient) return;
+    return await db.settings.delete(storyId);
+  }
+
+  // 版本历史相关方法
+  async createSettingVersion(setting: WorldSetting) {
+    if (!this.isClient) return;
+    const version = {
+      id: crypto.randomUUID(),
+      settingId: setting.id,
+      data: setting,
+      createdAt: Date.now(),
+    };
+    return await db.settingHistory.add(version);
+  }
+
+  async getSettingVersions(settingId: string) {
+    if (!this.isClient) return [];
+    return await db.settingHistory
+      .where("settingId")
+      .equals(settingId)
+      .reverse()
       .toArray();
   }
 }

@@ -12,7 +12,13 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { Dialog } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { database } from "@/services/db";
 import { useToast } from "@/components/ui/use-toast";
@@ -36,7 +42,7 @@ export function StorySelector() {
     }
 
     try {
-      const newStory = {
+      const newStory: Story = {
         id: crypto.randomUUID(),
         title: title.trim(),
         createdAt: Date.now(),
@@ -46,8 +52,8 @@ export function StorySelector() {
       await database.createStory(newStory);
       await refreshStories();
       setCurrentStory(newStory);
-      setTitle("");
       setIsOpen(false);
+      setTitle("");
 
       toast({
         title: "成功",
@@ -57,7 +63,7 @@ export function StorySelector() {
       console.error("Failed to create story:", error);
       toast({
         title: "错误",
-        description: "创建故事失败",
+        description: "故事创建失败",
         variant: "destructive",
       });
     }
@@ -66,21 +72,22 @@ export function StorySelector() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">故事</h2>
-        <Button variant="outline" size="icon" onClick={() => setIsOpen(true)}>
-          <PlusCircle className="h-4 w-4" />
+        <div className="text-sm font-medium">故事</div>
+        <Button variant="outline" size="sm" onClick={() => setIsOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          新建
         </Button>
       </div>
 
       <Select
         value={currentStory?.id}
-        onValueChange={(id) => {
-          const story = stories.find((s) => s.id === id);
+        onValueChange={(value) => {
+          const story = stories.find((s) => s.id === value);
           if (story) setCurrentStory(story);
         }}
       >
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="选择故事" />
+        <SelectTrigger>
+          <SelectValue placeholder="选择一个故事" />
         </SelectTrigger>
         <SelectContent>
           {stories.map((story) => (
@@ -92,25 +99,32 @@ export function StorySelector() {
       </Select>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <form onSubmit={handleCreateStory} className="space-y-4 p-4">
-          <h2 className="text-lg font-semibold">创建新故事</h2>
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="为你的新故事起一个名字，开始创作之旅。"
-            autoFocus
-          />
-          <div className="flex justify-end space-x-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-            >
-              取消
-            </Button>
-            <Button type="submit">创建</Button>
-          </div>
-        </form>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>创建新故事</DialogTitle>
+            <DialogDescription>
+              为你的新故事起一个名字，开始创作之旅。
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateStory} className="space-y-4">
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="故事标题"
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+              >
+                取消
+              </Button>
+              <Button type="submit">创建</Button>
+            </div>
+          </form>
+        </DialogContent>
       </Dialog>
     </div>
   );

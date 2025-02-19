@@ -36,6 +36,7 @@ export function SessionSelector() {
   const loadSessions = React.useCallback(async () => {
     if (!state.currentStory) return;
     try {
+      debugger;
       const data = await storyDB.getStorySessions(state.currentStory.id);
       setSessions(data);
     } catch (error) {

@@ -12,7 +12,14 @@ export function StoryToolbar() {
 
   return (
     <div className="flex items-center justify-between">
-      <h2 className="text-lg font-semibold">{currentStory.title}</h2>
+      <div className="space-y-1">
+        <h2 className="text-2xl font-semibold tracking-tight">
+          {currentStory.title}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          创建于 {new Date(currentStory.createdAt).toLocaleDateString()}
+        </p>
+      </div>
       <div className="flex items-center gap-2">
         <QualityReview />
         <ExportDialog />
