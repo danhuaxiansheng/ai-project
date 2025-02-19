@@ -290,8 +290,9 @@ export class DatabaseService {
   }
 
   async getStoryMessages(storyId: string) {
-    if (!this.isClient || !db) return [];
+    if (!this.isClient) return [];
     try {
+      // 使用复合索引进行查询
       return await db.messages
         .where("[storyId+timestamp]")
         .between([storyId, Dexie.minKey], [storyId, Dexie.maxKey])
