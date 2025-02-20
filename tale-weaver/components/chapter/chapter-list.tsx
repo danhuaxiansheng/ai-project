@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Plus, FileText, ChevronRight, MoreVertical, Trash, Eye } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChapterEditor } from "./chapter-editor";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +31,7 @@ import { ExportButton } from "./export-button";
 import { ChapterStats } from "./chapter-stats";
 import { ChapterFilters } from "./chapter-filters";
 import { toast } from "@/components/ui/use-toast";
+import { DndProvider } from "../dnd-provider";
 
 interface ChapterListProps {
   storyId: string;
@@ -95,7 +96,7 @@ export function ChapterList({ storyId, chapters, onUpdate }: ChapterListProps) {
     }
   };
 
-  const handleDragEnd = (result: any) => {
+  const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
     const items = Array.from(sortedChapters);
@@ -146,96 +147,98 @@ export function ChapterList({ storyId, chapters, onUpdate }: ChapterListProps) {
           />
 
           <ScrollArea className="h-[600px]">
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="chapters">
-                {(provided) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef}>
-                    {filteredChapters.map((chapter, index) => (
-                      <Draggable
-                        key={chapter.id}
-                        draggableId={chapter.id}
-                        index={index}
-                      >
-                        {(provided) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                          >
-                            <Card
-                              className={`p-4 cursor-pointer hover:shadow transition-shadow ${
-                                selectedChapter?.id === chapter.id ? 'border-primary' : ''
-                              }`}
-                              onClick={() => handleEditChapter(chapter)}
+            <DndProvider>
+              <DragDropContext onDragEnd={handleDragEnd}>
+                <Droppable droppableId="chapters">
+                  {(provided) => (
+                    <div {...provided.droppableProps} ref={provided.innerRef}>
+                      {filteredChapters.map((chapter, index) => (
+                        <Draggable
+                          key={chapter.id}
+                          draggableId={chapter.id}
+                          index={index}
+                        >
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
                             >
-                              <div className="flex items-center gap-3">
-                                <div className="flex-1">
-                                  <h4 className="font-medium">{chapter.title}</h4>
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <span>{chapter.wordCount} 字</span>
-                                    <span>·</span>
-                                    <span>{chapter.status === 'published' ? '已发布' : '草稿'}</span>
+                              <Card
+                                className={`p-4 cursor-pointer hover:shadow transition-shadow ${
+                                  selectedChapter?.id === chapter.id ? 'border-primary' : ''
+                                }`}
+                                onClick={() => handleEditChapter(chapter)}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="flex-1">
+                                    <h4 className="font-medium">{chapter.title}</h4>
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                      <span>{chapter.wordCount} 字</span>
+                                      <span>·</span>
+                                      <span>{chapter.status === 'published' ? '已发布' : '草稿'}</span>
+                                    </div>
+                                  </div>
+                                  <div onClick={e => e.stopPropagation()}>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm">
+                                          <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedChapter(chapter);
+                                          setIsPreview(true);
+                                        }}>
+                                          <Eye className="h-4 w-4 mr-2" />
+                                          预览
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <AlertDialog>
+                                          <AlertDialogTrigger asChild>
+                                            <DropdownMenuItem
+                                              className="text-red-600 focus:text-red-600"
+                                              onSelect={(e) => e.preventDefault()}
+                                            >
+                                              <Trash className="h-4 w-4 mr-2" />
+                                              删除章节
+                                            </DropdownMenuItem>
+                                          </AlertDialogTrigger>
+                                          <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                              <AlertDialogTitle>确认删除章节？</AlertDialogTitle>
+                                              <AlertDialogDescription>
+                                                此操作将永久删除该章节，无法恢复。
+                                              </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                              <AlertDialogCancel>取消</AlertDialogCancel>
+                                              <AlertDialogAction
+                                                className="bg-red-600 hover:bg-red-700"
+                                                onClick={(e) => handleDelete(chapter.id, e)}
+                                              >
+                                                删除
+                                              </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                          </AlertDialogContent>
+                                        </AlertDialog>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
                                   </div>
                                 </div>
-                                <div onClick={e => e.stopPropagation()}>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="sm">
-                                        <MoreVertical className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedChapter(chapter);
-                                        setIsPreview(true);
-                                      }}>
-                                        <Eye className="h-4 w-4 mr-2" />
-                                        预览
-                                      </DropdownMenuItem>
-                                      <DropdownMenuSeparator />
-                                      <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                          <DropdownMenuItem
-                                            className="text-red-600 focus:text-red-600"
-                                            onSelect={(e) => e.preventDefault()}
-                                          >
-                                            <Trash className="h-4 w-4 mr-2" />
-                                            删除章节
-                                          </DropdownMenuItem>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                          <AlertDialogHeader>
-                                            <AlertDialogTitle>确认删除章节？</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                              此操作将永久删除该章节，无法恢复。
-                                            </AlertDialogDescription>
-                                          </AlertDialogHeader>
-                                          <AlertDialogFooter>
-                                            <AlertDialogCancel>取消</AlertDialogCancel>
-                                            <AlertDialogAction
-                                              className="bg-red-600 hover:bg-red-700"
-                                              onClick={(e) => handleDelete(chapter.id, e)}
-                                            >
-                                              删除
-                                            </AlertDialogAction>
-                                          </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                      </AlertDialog>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              </div>
-                            </Card>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+                              </Card>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            </DndProvider>
             {chapters.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 <FileText className="h-8 w-8 mx-auto mb-2" />
