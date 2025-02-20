@@ -1,43 +1,39 @@
 export interface WorldSetting {
   id: string;
   storyId: string;
-  name: string;
-  description: string;
+  geography?: {
+    regions: Region[];
+    climate: string;
+    terrain: string;
+  };
+  society?: {
+    politics: string;
+    economy: string;
+    culture: string;
+    technology: string;
+  };
+  powerSystem?: {
+    name: string;
+    description: string;
+    rules: string[];
+    levels: PowerLevel[];
+  };
   createdAt: number;
   updatedAt: number;
-
-  // 地理体系
-  geography: {
-    regions: Region[];
-    climate: ClimateSystem;
-    resources: Resource[];
-  };
-
-  // 社会体系
-  society: {
-    cultures: Culture[];
-    politics: PoliticalSystem;
-    economy: EconomicSystem;
-    religions: Religion[];
-  };
-
-  // 魔法/科技体系
-  powerSystem: {
-    type: "magic" | "technology" | "hybrid";
-    rules: PowerRule[];
-    limitations: string[];
-    artifacts: Artifact[];
-  };
 }
 
-interface Region {
+export interface Region {
   id: string;
   name: string;
   description: string;
-  climate: string;
-  terrain: string;
-  resources: string[];
-  cultures: string[]; // 关联的文化ID
+  features: string[];
+}
+
+export interface PowerLevel {
+  id: string;
+  name: string;
+  description: string;
+  requirements: string[];
 }
 
 interface Culture {

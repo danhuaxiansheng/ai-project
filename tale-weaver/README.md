@@ -64,6 +64,7 @@ graph TD
 | --------- | ---------------------------------- | -------------------------- |
 | 前端框架  | Next.js 14 + React 19              | App Router, 服务端组件     |
 | UI 组件库 | shadcn/ui + Tailwind CSS + Iconify | 高度可定制, 主题系统       |
+| 图标库    | iconify|-|
 | 状态管理  | React Context + TypeScript         | 类型安全, 上下文共享       |
 | 数据存储  | SQL.js + Dexie.js (IndexedDB)      | 本地持久化, 结构化查询     |
 | 向量检索  | @xenova/transformers               | 轻量级文本向量化, 离线支持 |
