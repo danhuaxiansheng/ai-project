@@ -160,12 +160,12 @@ export default function StoryDetailPage() {
   };
 
   const handleCharactersUpdate = async (updatedCharacter: Character) => {
-    if (!currentStory) return;
+    if (!currentStory?.settings?.characters) return;
 
     try {
-      const updatedCharacters = currentStory.settings?.characters.map(c => 
+      const updatedCharacters = currentStory.settings.characters.map(c => 
         c.id === updatedCharacter.id ? updatedCharacter : c
-      ) || [];
+      );
 
       await db.updateStory(currentStory.id, {
         settings: {
@@ -233,12 +233,12 @@ export default function StoryDetailPage() {
   };
 
   const handleCharacterDelete = async (characterId: string) => {
-    if (!currentStory) return;
+    if (!currentStory?.settings?.characters) return;
 
     try {
-      const updatedCharacters = currentStory.settings?.characters.filter(
+      const updatedCharacters = currentStory.settings.characters.filter(
         c => c.id !== characterId
-      ) || [];
+      );
 
       await db.updateStory(currentStory.id, {
         settings: {

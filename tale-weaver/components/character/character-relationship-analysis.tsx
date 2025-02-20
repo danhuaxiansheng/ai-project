@@ -2,56 +2,32 @@
 
 import { Character, CharacterRelationship } from "@/types/character";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Heart, 
-  Home, 
-  Swords,
-  Users, 
-  HelpCircle
-} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Users, Swords, Home, Heart, HelpCircle } from "lucide-react";
 
 interface CharacterRelationshipAnalysisProps {
   character: Character;
   characters: Character[];
+  onCharacterClick?: (characterId: string) => void;
 }
 
-interface RelationshipGroup {
-  type: CharacterRelationship['type'];
-  characters: Array<{
-    character: Character;
-    relationship: CharacterRelationship;
-    mutual: boolean;
-  }>;
-}
-
-export function CharacterRelationshipAnalysis({ character, characters }: CharacterRelationshipAnalysisProps) {
-  // 分析关系
-  const relationshipGroups: Record<CharacterRelationship['type'], RelationshipGroup> = {
-    friend: { type: 'friend', characters: [] },
-    enemy: { type: 'enemy', characters: [] },
-    family: { type: 'family', characters: [] },
-    lover: { type: 'lover', characters: [] },
-    other: { type: 'other', characters: [] },
+export function CharacterRelationshipAnalysis({ 
+  character, 
+  characters,
+  onCharacterClick 
+}: CharacterRelationshipAnalysisProps) {
+  const relationshipStats = {
+    friend: character.relationships.filter(r => r.type === 'friend').length,
+    enemy: character.relationships.filter(r => r.type === 'enemy').length,
+    family: character.relationships.filter(r => r.type === 'family').length,
+    lover: character.relationships.filter(r => r.type === 'lover').length,
+    other: character.relationships.filter(r => r.type === 'other').length,
   };
 
-  // 分组关系
-  character.relationships.forEach(rel => {
-    const targetCharacter = characters.find(c => c.id === rel.targetId);
-    if (!targetCharacter) return;
-
-    // 检查是否为双向关系
-    const mutualRelationship = targetCharacter.relationships.find(r => 
-      r.targetId === character.id && r.type === rel.type
-    );
-
-    relationshipGroups[rel.type].characters.push({
-      character: targetCharacter,
-      relationship: rel,
-      mutual: Boolean(mutualRelationship),
-    });
-  });
+  const getCharacterName = (id: string) => 
+    characters.find(c => c.id === id)?.name || '未知角色';
 
   const getRelationshipIcon = (type: CharacterRelationship['type']) => {
     switch (type) {
@@ -63,61 +39,90 @@ export function CharacterRelationshipAnalysis({ character, characters }: Charact
     }
   };
 
-  const getRelationshipLabel = (type: CharacterRelationship['type']) => {
-    return {
-      friend: '朋友',
-      enemy: '敌人',
-      family: '家人',
-      lover: '恋人',
-      other: '其他'
-    }[type];
+  // 检查是否存在双向关系
+  const checkMutualRelationship = (targetId: string, type: CharacterRelationship['type']) => {
+    const targetCharacter = characters.find(c => c.id === targetId);
+    return targetCharacter?.relationships.some(r => 
+      r.targetId === character.id && r.type === type
+    );
   };
+
+  const RelationshipStrength = ({ strength }: { strength: number }) => (
+    <div className="flex gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div
+          key={i}
+          className={cn(
+            "w-1.5 h-1.5 rounded-full",
+            i < strength ? "bg-primary" : "bg-muted"
+          )}
+        />
+      ))}
+    </div>
+  );
 
   return (
     <Card className="p-4">
-      <h3 className="text-lg font-semibold mb-4">关系分析</h3>
-      <ScrollArea className="h-[400px] pr-4">
-        <div className="space-y-6">
-          {Object.values(relationshipGroups).map(group => 
-            group.characters.length > 0 && (
-              <div key={group.type} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  {getRelationshipIcon(group.type)}
-                  <h4 className="font-medium">{getRelationshipLabel(group.type)}</h4>
-                  <Badge variant="outline">{group.characters.length}</Badge>
+      <h3 className="text-sm font-medium mb-4">关系分析</h3>
+      
+      <div className="space-y-4">
+        {/* 关系统计 */}
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(relationshipStats).map(([type, count]) => count > 0 && (
+            <div key={type} className="flex items-center gap-1">
+              {getRelationshipIcon(type as CharacterRelationship['type'])}
+              <Badge variant="secondary" className="flex items-center gap-1">
+                {{
+                  friend: '朋友',
+                  enemy: '敌人',
+                  family: '家人',
+                  lover: '恋人',
+                  other: '其他'
+                }[type]}
+                <span className="text-xs ml-1">{count}</span>
+              </Badge>
+            </div>
+          ))}
+        </div>
+
+        {/* 关系列表 */}
+        <ScrollArea className="h-[300px]">
+          <div className="space-y-2 pr-4">
+            {character.relationships.map((rel, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer"
+                onClick={() => onCharacterClick?.(rel.targetId)}
+              >
+                <div className="flex items-start gap-3">
+                  {getRelationshipIcon(rel.type)}
+                  <div>
+                    <div className="font-medium">{getCharacterName(rel.targetId)}</div>
+                    <div className="text-sm text-muted-foreground">{rel.description}</div>
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  {group.characters.map(({ character: target, relationship, mutual }) => (
-                    <Card key={target.id} className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium">{target.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {relationship.description}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {mutual && (
-                            <Badge variant="secondary">双向关系</Badge>
-                          )}
-                          <div className="flex gap-0.5">
-                            {Array.from({ length: relationship.strength }).map((_, i) => (
-                              <div
-                                key={i}
-                                className="w-1.5 h-1.5 rounded-full bg-primary"
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">
+                      {{
+                        friend: '朋友',
+                        enemy: '敌人',
+                        family: '家人',
+                        lover: '恋人',
+                        other: '其他'
+                      }[rel.type]}
+                    </Badge>
+                    {checkMutualRelationship(rel.targetId, rel.type) && (
+                      <Badge variant="secondary">双向</Badge>
+                    )}
+                  </div>
+                  <RelationshipStrength strength={rel.strength} />
                 </div>
               </div>
-            )
-          )}
-        </div>
-      </ScrollArea>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
     </Card>
   );
 } 

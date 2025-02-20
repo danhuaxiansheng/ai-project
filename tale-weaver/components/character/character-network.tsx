@@ -2,180 +2,177 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Character } from "@/types/character";
-import { ForceGraph2D } from "react-force-graph";
+import ForceGraph2D from "react-force-graph-2d";
 import { Card } from "@/components/ui/card";
-import { CharacterNetworkExport } from "./character-network-export";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Download, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CharacterNetworkProps {
   characters: Character[];
-  onNodeClick?: (characterId: string) => void;
+  onCharacterClick?: (characterId: string) => void;
 }
 
-interface NodeData {
-  name: string;
-  role: Character['role'];
-  val: number;
-}
+export default function CharacterNetwork({ characters, onCharacterClick }: CharacterNetworkProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const graphRef = useRef<any>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-interface LinkData {
-  type: string;
-  strength: number;
-  bidirectional: boolean;
-}
-
-export const CharacterNetwork = ({ characters, onNodeClick }: CharacterNetworkProps) => {
-  const graphRef = useRef<ForceGraph2D<NodeData, LinkData>>(null);
-  const [hoveredNode, setHoveredNode] = useState<NodeObject<NodeData> | null>(null);
-  const [hoveredLink, setHoveredLink] = useState<LinkObject<LinkData> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
+  // 构建图数据
   const graphData = {
-    nodes: characters.map(c => ({
-      id: c.id,
-      name: c.name,
-      role: c.role,
-      val: c.relationships.length + 1
+    nodes: characters.map(char => ({
+      id: char.id,
+      name: char.name,
+      role: char.role,
+      val: char.relationships.length + 1, // 节点大小基于关系数量
     })),
-    links: characters.flatMap(c =>
-      c.relationships.map(r => ({
-        source: c.id,
-        target: r.targetId,
-        type: r.type,
-        strength: r.strength,
-        bidirectional: r.bidirectional
+    links: characters.flatMap(char =>
+      char.relationships.map(rel => ({
+        source: char.id,
+        target: rel.targetId,
+        type: rel.type,
+        strength: rel.strength,
+        bidirectional: rel.bidirectional,
       }))
-    )
+    ),
   };
 
   useEffect(() => {
-    if (graphRef.current) {
-      graphRef.current.d3Force('link').distance((link: LinkObject<LinkData>) => 
-        100 / (link.strength || 1)
-      );
-      graphRef.current.d3Force('charge').strength(-100);
-    }
-    setIsLoading(false);
-  }, [characters]);
+    const handleResize = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.clientWidth;
+        const height = isFullscreen ? window.innerHeight - 100 : 400;
+        containerRef.current.style.height = `${height}px`;
+        graphRef.current?.width(width);
+        graphRef.current?.height(height);
+      }
+    };
 
-  const handleNodeLabel = (node: NodeObject<NodeData>): string => `${node.name}`;
-  
-  const handleNodeColor = (node: NodeObject<NodeData>): string => 
-    node.role === 'protagonist' ? '#3b82f6' :
-    node.role === 'antagonist' ? '#ef4444' :
-    '#6b7280';
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isFullscreen]);
 
-  const handleLinkColor = (link: LinkObject<LinkData>): string => 
-    link.type === 'friend' ? '#22c55e' :
-    link.type === 'enemy' ? '#ef4444' :
-    link.type === 'family' ? '#3b82f6' :
-    link.type === 'lover' ? '#ec4899' :
-    '#6b7280';
-
-  const handleLinkWidth = (link: LinkObject<LinkData>): number => 
-    (link.strength || 1) * 0.5;
-
-  const handleNodeClick = (node: NodeObject<NodeData>) => {
-    onNodeClick?.(node.id);
+  const handleZoomIn = () => {
+    const currentZoom = graphRef.current.zoom();
+    graphRef.current.zoom(currentZoom * 1.2, 400);
   };
 
-  if (isLoading) {
-    return (
-      <Card className="p-4">
-        <div className="h-[400px] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </Card>
-    );
-  }
+  const handleZoomOut = () => {
+    const currentZoom = graphRef.current.zoom();
+    graphRef.current.zoom(currentZoom * 0.8, 400);
+  };
+
+  const handleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  const handleDownload = () => {
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      const link = document.createElement('a');
+      link.download = '角色关系网络图.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+  };
 
   return (
-    <Card className="p-4">
+    <Card className={`p-4 ${isFullscreen ? 'fixed inset-4 z-50 bg-background' : ''}`}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">关系网络</h3>
-        <div className="flex items-center gap-2">
-          <CharacterNetworkExport graphRef={graphRef} />
-        </div>
+        <h3 className="text-sm font-medium">关系网络图</h3>
+        <TooltipProvider>
+          <div className="flex gap-2">
+            <div className="text-sm text-muted-foreground">
+              {characters.length} 个角色，{graphData.links.length} 个关系
+            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" onClick={handleZoomIn}>
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>放大</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" onClick={handleZoomOut}>
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>缩小</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" onClick={handleFullscreen}>
+                  <Maximize2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>全屏</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" onClick={handleDownload}>
+                  <Download className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>下载图片</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       </div>
-      <TooltipProvider>
-        <div className="relative h-[400px] w-full">
-          <ForceGraph2D
-            ref={graphRef}
-            graphData={graphData}
-            nodeLabel={handleNodeLabel}
-            nodeColor={handleNodeColor}
-            linkColor={handleLinkColor}
-            linkWidth={handleLinkWidth}
-            onNodeClick={handleNodeClick}
-            onNodeHover={setHoveredNode}
-            onLinkHover={setHoveredLink}
-            cooldownTicks={100}
-            nodeRelSize={6}
-            linkDirectionalParticles={2}
-            linkDirectionalParticleSpeed={0.005}
-            linkDirectionalParticleWidth={2}
-            backgroundColor="transparent"
-          />
-          {hoveredNode && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="absolute top-0 left-0" style={{
-                  transform: `translate(${hoveredNode.x}px, ${hoveredNode.y}px)`
-                }} />
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="flex flex-col gap-1">
-                  <div className="font-medium">{hoveredNode.name}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {hoveredNode.role === 'protagonist' ? '主角' :
-                     hoveredNode.role === 'antagonist' ? '反派' : '配角'}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    关系数: {hoveredNode.val - 1}
-                  </div>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {hoveredLink && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="absolute top-0 left-0" style={{
-                  transform: `translate(${
-                    ((hoveredLink.source as NodeObject).x + (hoveredLink.target as NodeObject).x) / 2
-                  }px, ${
-                    ((hoveredLink.source as NodeObject).y + (hoveredLink.target as NodeObject).y) / 2
-                  }px)`
-                }} />
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="flex flex-col gap-1">
-                  <div className="font-medium">
-                    {hoveredLink.type === 'friend' ? '朋友' :
-                     hoveredLink.type === 'enemy' ? '敌人' :
-                     hoveredLink.type === 'family' ? '家人' :
-                     hoveredLink.type === 'lover' ? '恋人' : '其他'}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    关系强度: {hoveredLink.strength}
-                    {hoveredLink.bidirectional && ' (双向)'}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {(hoveredLink.source as NodeObject).name} → {(hoveredLink.target as NodeObject).name}
-                  </div>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-      </TooltipProvider>
+      <div ref={containerRef} className="w-full">
+        <ForceGraph2D
+          ref={graphRef}
+          graphData={graphData}
+          nodeLabel="name"
+          nodeColor={node => 
+            node.role === 'protagonist' ? '#3b82f6' :
+            node.role === 'antagonist' ? '#ef4444' :
+            '#6b7280'
+          }
+          nodeRelSize={6}
+          linkColor={link => {
+            switch (link.type) {
+              case 'friend': return '#22c55e';
+              case 'enemy': return '#ef4444';
+              case 'family': return '#3b82f6';
+              case 'lover': return '#ec4899';
+              default: return '#6b7280';
+            }
+          }}
+          linkWidth={link => (link.strength || 1) * 0.5}
+          linkDirectionalParticles={link => link.bidirectional ? 4 : 0}
+          linkDirectionalParticleWidth={2}
+          onNodeClick={node => onCharacterClick?.(node.id as string)}
+          nodeCanvasObject={(node, ctx, globalScale) => {
+            const size = ((node.val as number || 1) * 5) / globalScale;
+            ctx.beginPath();
+            ctx.arc(node.x!, node.y!, size, 0, 2 * Math.PI);
+            ctx.fillStyle = node.role === 'protagonist' ? '#3b82f6' :
+                           node.role === 'antagonist' ? '#ef4444' :
+                           '#6b7280';
+            ctx.fill();
+            
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1 / globalScale;
+            ctx.stroke();
+            
+            const label = node.name as string;
+            ctx.font = `${12/globalScale}px Sans-Serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#888';
+            ctx.fillText(label, node.x!, node.y! + size + 3);
+          }}
+          cooldownTicks={100}
+          d3Force={force => {
+            force.center = null;
+            force.charge = -100;
+            force.link.distance = link => 100 / (link.strength || 1);
+          }}
+        />
+      </div>
     </Card>
   );
-}
-
-export default CharacterNetwork; 
+} 

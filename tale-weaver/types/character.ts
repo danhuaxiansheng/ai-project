@@ -31,4 +31,18 @@ export interface CharacterRelationship {
   description: string;
   strength: number;
   bidirectional: boolean;
+}
+
+export interface Story {
+  id: string;
+  title: string;
+  excerpt: string;
+  progress: number;
+  settings?: {
+    characters?: Character[];
+    worldbuilding?: any; // 根据需要定义具体类型
+    outlines?: any; // 根据需要定义具体类型
+  };
+  createdAt: number;
+  updatedAt: number;
 } 

@@ -1,9 +1,8 @@
 "use client";
 
-import { Character } from "@/types/character";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { User, Briefcase, MapPin, Calendar } from "lucide-react";
+import { Character } from "@/types/character";
+import { CalendarDays, User2, Briefcase, MapPin } from "lucide-react";
 
 interface CharacterAttributesProps {
   attributes: Character['attributes'];
@@ -12,43 +11,50 @@ interface CharacterAttributesProps {
 export function CharacterAttributes({ attributes }: CharacterAttributesProps) {
   const attributeItems = [
     {
-      icon: Calendar,
+      icon: <CalendarDays className="h-4 w-4" />,
       label: "年龄",
       value: attributes.age,
+      placeholder: "未设置年龄"
     },
     {
-      icon: User,
+      icon: <User2 className="h-4 w-4" />,
       label: "性别",
       value: attributes.gender === 'male' ? '男' : 
              attributes.gender === 'female' ? '女' : 
-             attributes.gender === 'other' ? '其他' : null,
+             attributes.gender || '未设置性别'
     },
     {
-      icon: Briefcase,
+      icon: <Briefcase className="h-4 w-4" />,
       label: "职业",
       value: attributes.occupation,
+      placeholder: "未设置职业"
     },
     {
-      icon: MapPin,
+      icon: <MapPin className="h-4 w-4" />,
       label: "出生地",
       value: attributes.birthplace,
-    },
+      placeholder: "未设置出生地"
+    }
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 gap-4">
       {attributeItems.map((item, index) => (
-        item.value && (
-          <Card key={index} className="p-4">
-            <div className="flex items-center gap-2">
-              <item.icon className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <div className="text-sm text-muted-foreground">{item.label}</div>
-                <div className="font-medium">{item.value}</div>
+        <Card key={index} className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-muted">
+              {item.icon}
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">
+                {item.label}
+              </div>
+              <div className="font-medium">
+                {item.value || item.placeholder}
               </div>
             </div>
-          </Card>
-        )
+          </div>
+        </Card>
       ))}
     </div>
   );
