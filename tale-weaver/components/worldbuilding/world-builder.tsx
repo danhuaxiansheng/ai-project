@@ -1,97 +1,70 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { WorldSetting } from "@/types/worldbuilding";
-import * as db from "@/lib/db";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GeographyEditor } from "./geography-editor";
-import { SocietyEditor } from "./society-editor";
-import { PowerSystemEditor } from "./power-system-editor";
+import { WorldSettingForm } from "./world-setting-form";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
+import { database } from "@/services/db";
 
 interface WorldBuilderProps {
   storyId: string;
 }
 
 export function WorldBuilder({ storyId }: WorldBuilderProps) {
-  const [settings, setSettings] = useState<WorldSetting | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("geography");
+  const { toast } = useToast();
 
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const worldSettings = await db.getWorldSettingByStoryId(storyId);
-        setSettings(worldSettings || null);
-      } catch (error) {
-        console.error('Failed to load world settings:', error);
-        toast({
-          title: "错误",
-          description: "加载世界观设定失败",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadSettings();
-  }, [storyId]);
-
-  const handleSave = async (updatedSettings: WorldSetting) => {
+  const handleSave = async (type: string, content: any) => {
     try {
-      await db.updateWorldSetting(storyId, updatedSettings);
-      setSettings(updatedSettings);
+      await database.updateSettings(storyId, type, JSON.stringify(content));
       toast({
-        title: "成功",
-        description: "世界观设定已保存",
+        title: "保存成功",
+        description: "世界观设定已更新",
       });
     } catch (error) {
-      console.error('Failed to save world settings:', error);
       toast({
-        title: "错误",
-        description: "保存世界观设定失败",
+        title: "保存失败",
+        description: "无法保存设定",
         variant: "destructive",
       });
     }
   };
 
-  if (isLoading) {
-    return <div>加载中...</div>;
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">世界观设定</h2>
-        <Button onClick={() => handleSave(settings!)}>保存</Button>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">世界观构建</h2>
       </div>
 
-      <Tabs defaultValue="geography" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="geography">地理</TabsTrigger>
           <TabsTrigger value="society">社会</TabsTrigger>
-          <TabsTrigger value="power-system">力量体系</TabsTrigger>
+          <TabsTrigger value="magic">力量体系</TabsTrigger>
         </TabsList>
 
         <TabsContent value="geography">
-          <GeographyEditor
-            data={settings?.geography}
-            onChange={(geography) => handleSave({ geography })}
+          <WorldSettingForm
+            storyId={storyId}
+            type="geography"
+            onSave={(content) => handleSave("geography", content)}
           />
         </TabsContent>
 
         <TabsContent value="society">
-          <SocietyEditor
-            data={settings?.society}
-            onChange={(society) => handleSave({ society })}
+          <WorldSettingForm
+            storyId={storyId}
+            type="society"
+            onSave={(content) => handleSave("society", content)}
           />
         </TabsContent>
 
-        <TabsContent value="power-system">
-          <PowerSystemEditor
-            data={settings?.powerSystem}
-            onChange={(powerSystem) => handleSave({ powerSystem })}
+        <TabsContent value="magic">
+          <WorldSettingForm
+            storyId={storyId}
+            type="magic"
+            onSave={(content) => handleSave("magic", content)}
           />
         </TabsContent>
       </Tabs>

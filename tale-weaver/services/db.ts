@@ -14,13 +14,13 @@ export class DatabaseService extends Dexie {
   settingHistory!: Table<any, string>;
 
   constructor() {
-    super('tale-weaver');
+    super("tale-weaver");
     this.version(1).stores({
-      stories: 'id, title, status, createdAt, updatedAt',
-      sessions: 'id, storyId, title, type, createdAt',
-      messages: 'id, sessionId, [storyId+timestamp]',
-      settings: 'id, storyId, createdAt',
-      settingHistory: 'id, settingId, version, createdAt'
+      stories: "id, title, status, createdAt, updatedAt",
+      sessions: "id, storyId, title, type, createdAt",
+      messages: "id, sessionId, [storyId+timestamp]",
+      settings: "id, storyId, createdAt",
+      settingHistory: "id, settingId, version, createdAt",
     });
   }
 
@@ -67,9 +67,10 @@ export class DatabaseService extends Dexie {
 
   async searchStories(query: string): Promise<Story[]> {
     return this.stories
-      .filter(story => 
-        story.title.toLowerCase().includes(query.toLowerCase()) ||
-        story.excerpt.toLowerCase().includes(query.toLowerCase())
+      .filter(
+        (story) =>
+          story.title.toLowerCase().includes(query.toLowerCase()) ||
+          story.excerpt.toLowerCase().includes(query.toLowerCase())
       )
       .toArray();
   }
@@ -233,11 +234,14 @@ export class DatabaseService extends Dexie {
     }
   }
 
-  async getChapterById(storyId: string, chapterId: string): Promise<Chapter | undefined> {
+  async getChapterById(
+    storyId: string,
+    chapterId: string
+  ): Promise<Chapter | undefined> {
     if (!this.isClient) return undefined;
     try {
       const story = await this.stories.get(storyId);
-      return story?.chapters?.find(c => c.id === chapterId);
+      return story?.chapters?.find((c) => c.id === chapterId);
     } catch (error) {
       console.error("Error getting chapter:", error);
       return undefined;
@@ -251,8 +255,8 @@ export class DatabaseService extends Dexie {
       if (!story) throw new Error("Story not found");
 
       const chapters = story.chapters || [];
-      const index = chapters.findIndex(c => c.id === chapter.id);
-      
+      const index = chapters.findIndex((c) => c.id === chapter.id);
+
       if (index > -1) {
         chapters[index] = chapter;
       } else {
@@ -275,8 +279,8 @@ export class DatabaseService extends Dexie {
       const story = await this.stories.get(storyId);
       if (!story) throw new Error("Story not found");
 
-      const chapters = story.chapters?.filter(c => c.id !== chapterId) || [];
-      
+      const chapters = story.chapters?.filter((c) => c.id !== chapterId) || [];
+
       // 重新排序
       chapters.forEach((chapter, index) => {
         chapter.order = index;
@@ -301,7 +305,7 @@ export class DatabaseService extends Dexie {
       const chapters = story.chapters || [];
       const reorderedChapters = chapterIds
         .map((id, index) => {
-          const chapter = chapters.find(c => c.id === id);
+          const chapter = chapters.find((c) => c.id === id);
           return chapter ? { ...chapter, order: index } : null;
         })
         .filter((c): c is Chapter => c !== null);
@@ -405,7 +409,7 @@ export class DatabaseService extends Dexie {
   }
 
   async getWorldSetting(storyId: string): Promise<WorldSetting | undefined> {
-    return await this.settings.where('storyId').equals(storyId).first();
+    return await this.settings.where("storyId").equals(storyId).first();
   }
 
   async updateWorldSetting(setting: WorldSetting): Promise<void> {
@@ -437,6 +441,38 @@ export class DatabaseService extends Dexie {
       .equals(settingId)
       .reverse()
       .toArray();
+  }
+
+  async updateSettings(storyId: string, type: string, content: string) {
+    if (!this.isClient) return;
+
+    const setting = {
+      id: `${storyId}-${type}`,
+      storyId,
+      type,
+      content,
+      updatedAt: Date.now(),
+    };
+
+    await this.settings.put(setting);
+    return setting;
+  }
+
+  async getSettings(storyId: string) {
+    if (!this.isClient) return {};
+
+    const settings = await this.settings
+      .where("storyId")
+      .equals(storyId)
+      .toArray();
+
+    return settings.reduce(
+      (acc, setting) => ({
+        ...acc,
+        [setting.type]: setting.content,
+      }),
+      {}
+    );
   }
 }
 

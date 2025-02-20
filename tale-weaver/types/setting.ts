@@ -35,3 +35,30 @@ export interface SubPlot {
   relatedCharacters: string[];
   status: "planned" | "in-progress" | "completed";
 }
+
+export interface Setting {
+  id: string;
+  storyId: string;
+  type: "world" | "character" | "plot" | "magic-system";
+  content: string;
+  updatedAt: number;
+  version?: number;
+}
+
+export interface SettingHistory {
+  id: string;
+  settingId: string;
+  content: string;
+  version: number;
+  createdAt: number;
+}
+
+export interface SettingMetadata {
+  tags?: string[];
+  references?: {
+    type: string;
+    id: string;
+    title: string;
+  }[];
+  status: "draft" | "review" | "final";
+}

@@ -6,11 +6,75 @@ Tale Weaver 是一个智能写作助手应用，帮助创作者更好地创作�
 
 开发基于 DeepSeek API 的 AI 小说创作助手，实现：
 
-1. **基础设定管理**：按照小说名称分类管理各类设定、大纲、章节等必要元素
-2. **用户与多个 AI 角色协同创作**：故事构建者、对话生成者、情节推进者分工明确
-3. **上下文持续性**：通过本地存储实现可靠的数据持久化
-4. **质量导向审核**：三级审核机制（逻辑一致性、文风匹配度、观赏度）
-5. **实时反馈闭环**：支持人工修改建议并实时更新 AI 输出
+1. **基础设定管理**：
+
+   - 引导式设定创建流程
+   - 多维度设定分类（世界观、角色、剧情、魔法体系等）
+   - 设定间的智能关联
+   - 版本历史追踪
+
+2. **AI 协同创作**：
+
+   - 多角色 AI 顾问团队
+   - 基于用户想法的智能建议
+   - 实时反馈与修改
+   - 设定一致性检查
+
+3. **设定创作流程**：
+
+   - 第一步：用户输入初始想法
+
+     - 提供引导性提示
+     - 支持关键词和概要描述
+     - 灵活的输入方式
+
+   - 第二步：AI 协作完善
+
+     - 多角色分析和建议
+     - 自动关联相关设定
+     - 保持设定一致性
+     - 实时预览效果
+
+   - 第三步：确认与应用
+     - 设定预览和编辑
+     - 一键应用建议
+     - 版本管理
+     - 设定导出
+
+4. **设定类型**：
+
+   - 世界观设定
+
+     - 地理环境
+     - 文明发展
+     - 社会制度
+     - 历史背景
+
+   - 角色设定
+
+     - 性格特征
+     - 背景故事
+     - 关系网络
+     - 成长轨迹
+
+   - 剧情设定
+
+     - 主要冲突
+     - 情节发展
+     - 转折点
+     - 结局设计
+
+   - 魔法体系
+     - 基本规则
+     - 能力限制
+     - 获取方式
+     - 进阶体系
+
+5. **智能辅助功能**：
+   - 设定一致性检查
+   - 逻辑冲突检测
+   - 创意拓展建议
+   - 细节完善提醒
 
 ### 故事管理
 
@@ -64,7 +128,7 @@ graph TD
 | --------- | ---------------------------------- | -------------------------- |
 | 前端框架  | Next.js 14 + React 19              | App Router, 服务端组件     |
 | UI 组件库 | shadcn/ui + Tailwind CSS + Iconify | 高度可定制, 主题系统       |
-| 图标库    | iconify|-|
+| 图标库    | iconify                            | -                          |
 | 状态管理  | React Context + TypeScript         | 类型安全, 上下文共享       |
 | 数据存储  | SQL.js + Dexie.js (IndexedDB)      | 本地持久化, 结构化查询     |
 | 向量检索  | @xenova/transformers               | 轻量级文本向量化, 离线支持 |
@@ -101,19 +165,33 @@ graph TD
 
    ```typescript
    // 基础设定数据结构
-   interface NovelSetting {
-     id: string; // UUID
-     title: string;
-     settings: {
-       worldview: string;
-       characterProfiles: Character[];
-       timeline: Event[];
-     };
-     outline: {
-       mainPlot: string;
-       subPlots: SubPlot[];
-     };
-     chapters: Chapter[];
+   interface Setting {
+     id: string;
+     storyId: string;
+     type: "world" | "character" | "plot" | "magic-system";
+     content: string;
+     updatedAt: number;
+     version?: number;
+   }
+
+   // 设定历史记录
+   interface SettingHistory {
+     id: string;
+     settingId: string;
+     content: string;
+     version: number;
+     createdAt: number;
+   }
+
+   // 设定元数据
+   interface SettingMetadata {
+     tags?: string[];
+     references?: {
+       type: string;
+       id: string;
+       title: string;
+     }[];
+     status: "draft" | "review" | "final";
    }
    ```
 

@@ -61,6 +61,19 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(chapters, { headers: cacheHeaders });
       }
 
+      case "updateSettings": {
+        const { storyId, type, content } = data;
+        const result = await database.updateSettings(storyId, type, content);
+        return NextResponse.json(result, { headers: cacheHeaders });
+      }
+
+      case "getSettings": {
+        const storyId = searchParams.get("storyId");
+        if (!storyId) throw new Error("缺少故事 ID");
+        const settings = await database.getSettings(storyId);
+        return NextResponse.json(settings, { headers: cacheHeaders });
+      }
+
       default:
         return NextResponse.json(
           { error: "无效的操作" },
