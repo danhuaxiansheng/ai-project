@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 import { CharacterAttributes } from "./character-attributes";
 import { Badge } from "@/components/ui/badge";
 import { CharacterRelationshipAnalysis } from "./character-relationship-analysis";
+import { CharacterAnalysis } from "./character-analysis";
+import { CharacterNetwork } from "./character-network";
 
 interface CharacterDetailProps {
   character: Character;
@@ -108,6 +110,15 @@ export function CharacterDetail({ character, characters, onEdit, onClose }: Char
                 characters={characters} 
               />
             </div>
+          </div>
+
+          {/* 添加角色分析部分 */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">角色分析</h3>
+            <CharacterAnalysis 
+              character={character} 
+              characters={characters} 
+            />
           </div>
         </div>
       </ScrollArea>

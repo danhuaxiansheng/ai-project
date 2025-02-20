@@ -1,32 +1,33 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Character } from "@/types/character";
-import ForceGraph2D from "react-force-graph-2d";
+import ForceGraph2D, { NodeObject, LinkObject } from "react-force-graph-2d";
 import { Card } from "@/components/ui/card";
 import { CharacterNetworkExport } from "./character-network-export";
+import { Tooltip } from "@/components/ui/tooltip";
 
 interface CharacterNetworkProps {
   characters: Character[];
   onNodeClick?: (characterId: string) => void;
 }
 
-interface Node {
-  id: string;
+interface NodeData {
   name: string;
   role: Character['role'];
-  val: number; // 节点大小
+  val: number;
 }
 
-interface Link {
-  source: string;
-  target: string;
+interface LinkData {
   type: string;
   strength: number;
+  bidirectional: boolean;
 }
 
 export function CharacterNetwork({ characters, onNodeClick }: CharacterNetworkProps) {
-  const graphRef = useRef<any>();
+  const graphRef = useRef<ForceGraph2D<NodeData, LinkData>>(null);
+  const [hoveredNode, setHoveredNode] = useState<NodeObject<NodeData> | null>(null);
+  const [hoveredLink, setHoveredLink] = useState<LinkObject<LinkData> | null>(null);
 
   const graphData = {
     nodes: characters.map(c => ({
@@ -40,17 +41,41 @@ export function CharacterNetwork({ characters, onNodeClick }: CharacterNetworkPr
         source: c.id,
         target: r.targetId,
         type: r.type,
-        strength: r.strength
+        strength: r.strength,
+        bidirectional: r.bidirectional
       }))
     )
   };
 
   useEffect(() => {
     if (graphRef.current) {
-      graphRef.current.d3Force('link').distance(link => 100 / (link.strength || 1));
+      graphRef.current.d3Force('link').distance((link: LinkObject<LinkData>) => 
+        100 / (link.strength || 1)
+      );
       graphRef.current.d3Force('charge').strength(-100);
     }
   }, [characters]);
+
+  const handleNodeLabel = (node: NodeObject<NodeData>): string => `${node.name}`;
+  
+  const handleNodeColor = (node: NodeObject<NodeData>): string => 
+    node.role === 'protagonist' ? '#3b82f6' :
+    node.role === 'antagonist' ? '#ef4444' :
+    '#6b7280';
+
+  const handleLinkColor = (link: LinkObject<LinkData>): string => 
+    link.type === 'friend' ? '#22c55e' :
+    link.type === 'enemy' ? '#ef4444' :
+    link.type === 'family' ? '#3b82f6' :
+    link.type === 'lover' ? '#ec4899' :
+    '#6b7280';
+
+  const handleLinkWidth = (link: LinkObject<LinkData>): number => 
+    (link.strength || 1) * 0.5;
+
+  const handleNodeClick = (node: NodeObject<NodeData>) => {
+    onNodeClick?.(node.id);
+  };
 
   return (
     <Card className="p-4">
@@ -58,28 +83,51 @@ export function CharacterNetwork({ characters, onNodeClick }: CharacterNetworkPr
         <h3 className="text-lg font-semibold">关系网络</h3>
         <CharacterNetworkExport graphRef={graphRef} />
       </div>
-      <div className="h-[500px] w-full">
+      <div className="relative h-[400px] w-full">
         <ForceGraph2D
           ref={graphRef}
           graphData={graphData}
-          nodeLabel={node => `${(node as Node).name}`}
-          nodeColor={node => 
-            (node as Node).role === 'protagonist' ? '#3b82f6' :
-            (node as Node).role === 'antagonist' ? '#ef4444' :
-            '#6b7280'
-          }
-          linkColor={link => 
-            (link as Link).type === 'friend' ? '#22c55e' :
-            (link as Link).type === 'enemy' ? '#ef4444' :
-            (link as Link).type === 'family' ? '#3b82f6' :
-            (link as Link).type === 'lover' ? '#ec4899' :
-            '#6b7280'
-          }
-          linkWidth={link => ((link as Link).strength || 1) * 0.5}
-          onNodeClick={(node) => onNodeClick?.((node as Node).id)}
+          nodeLabel={handleNodeLabel}
+          nodeColor={handleNodeColor}
+          linkColor={handleLinkColor}
+          linkWidth={handleLinkWidth}
+          onNodeClick={handleNodeClick}
+          onNodeHover={setHoveredNode}
+          onLinkHover={setHoveredLink}
           cooldownTicks={100}
           nodeRelSize={6}
+          linkDirectionalParticles={2}
+          linkDirectionalParticleSpeed={0.005}
+          linkDirectionalParticleWidth={2}
+          backgroundColor="transparent"
         />
+        {hoveredNode && (
+          <Tooltip>
+            <div className="p-2">
+              <div className="font-medium">{hoveredNode.name}</div>
+              <div className="text-sm text-muted-foreground">
+                {hoveredNode.role === 'protagonist' ? '主角' :
+                 hoveredNode.role === 'antagonist' ? '反派' : '配角'}
+              </div>
+            </div>
+          </Tooltip>
+        )}
+        {hoveredLink && (
+          <Tooltip>
+            <div className="p-2">
+              <div className="font-medium">
+                {hoveredLink.type === 'friend' ? '朋友' :
+                 hoveredLink.type === 'enemy' ? '敌人' :
+                 hoveredLink.type === 'family' ? '家人' :
+                 hoveredLink.type === 'lover' ? '恋人' : '其他'}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                关系强度: {hoveredLink.strength}
+                {hoveredLink.bidirectional && ' (双向)'}
+              </div>
+            </div>
+          </Tooltip>
+        )}
       </div>
     </Card>
   );
