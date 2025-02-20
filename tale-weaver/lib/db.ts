@@ -20,19 +20,12 @@ export class NovelDatabase extends Dexie {
   timeline!: Table<TimelineEvent>;
 
   constructor() {
-    super("NovelDatabase");
+    super("tale-weaver-db");
 
-    // 删除旧版本
-    this.version(1)
-      .stores({})
-      .upgrade(() => {});
-
-    // 创建新版本
-    this.version(5).stores({
+    this.version(1).stores({
       stories: "id, title, createdAt, updatedAt",
       sessions: "id, storyId, title, createdAt, updatedAt",
-      messages:
-        "id, sessionId, storyId, timestamp, createdAt, [storyId+timestamp]", // 添加复合索引
+      messages: "id, sessionId, storyId, timestamp, [storyId+timestamp]",
       settings: "id, storyId, createdAt, updatedAt",
       chapters: "id, storyId, title, order, status",
       outlines: "id, storyId, title, type, parentId, order",
@@ -46,15 +39,17 @@ export class NovelDatabase extends Dexie {
 // 创建数据库实例
 export const db = new NovelDatabase();
 
-// 添加数据库初始化函数
+let isInitialized = false;
+
+// 修改数据库初始化函数
 export async function initDatabase() {
+  if (isInitialized) {
+    return;
+  }
+
   try {
-    // 删除旧数据库
-    await Dexie.delete("NovelDatabase");
-
-    // 重新打开数据库
     await db.open();
-
+    isInitialized = true;
     console.log("Database initialized successfully");
   } catch (error) {
     console.error("Failed to initialize database:", error);
@@ -64,44 +59,45 @@ export async function initDatabase() {
 
 // 故事相关操作
 export async function getStories(): Promise<Story[]> {
+  await initDatabase(); // 确保数据库已初始化
   return await db.stories.toArray();
 }
 
 export async function getStoryById(id: string): Promise<Story | undefined> {
+  await initDatabase();
   return await db.stories.get(id);
 }
 
-export async function createStory(story: Story): Promise<void> {
-  await db.stories.add(story);
+export async function createStory(story: Story): Promise<string> {
+  await initDatabase();
+  return await db.stories.add(story);
 }
 
 export async function updateStory(id: string, updates: Partial<Story>): Promise<void> {
-  await db.stories.update(id, updates);
+  await initDatabase();
+  await db.stories.update(id, { ...updates, updatedAt: Date.now() });
 }
 
 export async function deleteStory(id: string): Promise<void> {
+  await initDatabase();
   await db.transaction('rw', [
     db.stories, 
     db.chapters, 
     db.outlines, 
-    db.settings,
-    db.characters,
-    db.locations,
-    db.timeline,
-    db.sessions,
-    db.messages
+    db.characters, 
+    db.locations, 
+    db.timeline, 
+    db.settings
   ], async () => {
-    // 删除所有相关数据
+    // 删除相关数据
     await Promise.all([
-      db.outlines.where('storyId').equals(id).delete(),
+      db.stories.delete(id),
       db.chapters.where('storyId').equals(id).delete(),
-      db.settings.where('storyId').equals(id).delete(),
+      db.outlines.where('storyId').equals(id).delete(),
       db.characters.where('storyId').equals(id).delete(),
       db.locations.where('storyId').equals(id).delete(),
       db.timeline.where('storyId').equals(id).delete(),
-      db.sessions.where('storyId').equals(id).delete(),
-      db.messages.where('storyId').equals(id).delete(),
-      db.stories.delete(id)
+      db.settings.where('storyId').equals(id).delete(),
     ]);
   });
 }

@@ -15,6 +15,16 @@ import { OutlineList } from "@/components/chapter/outline-list";
 import { Chapter, Outline } from "@/types/story";
 import * as db from "@/lib/db";
 import { Character } from "@/types/character";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function StoryDetailPage() {
   const { id } = useParams();
@@ -27,6 +37,7 @@ export default function StoryDetailPage() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [outlines, setOutlines] = useState<Outline[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     const story = stories.find(s => s.id === id);
@@ -76,8 +87,10 @@ export default function StoryDetailPage() {
         title: "成功",
         description: "故事已删除",
       });
+      setShowDeleteDialog(false);
       router.push('/');
     } catch (error) {
+      console.error('Failed to delete story:', error);
       toast({
         title: "错误",
         description: "删除故事失败",
@@ -195,20 +208,20 @@ export default function StoryDetailPage() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
+            <Button variant="ghost">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              返回
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold">{currentStory.title}</h1>
+          <h1 className="text-2xl font-bold">{currentStory?.title}</h1>
         </div>
-        <Button 
-          variant="destructive" 
-          size="sm"
-          onClick={handleDelete}
+        <Button
+          variant="destructive"
+          onClick={() => setShowDeleteDialog(true)}
           disabled={isDeleting}
         >
           {isDeleting ? "删除中..." : "删除故事"}
@@ -276,6 +289,27 @@ export default function StoryDetailPage() {
           />
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确定要删除这个故事吗？</AlertDialogTitle>
+            <AlertDialogDescription>
+              此操作将永久删除"{currentStory?.title}"及其所有相关内容，包括章节、大纲等。此操作无法撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? "删除中..." : "删除"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 } 
