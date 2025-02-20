@@ -1,332 +1,418 @@
 "use client";
 
 import { useState } from "react";
-import { Character, CharacterRelationship } from "@/types/character";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Character } from "@/types/character";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { generateUUID } from "@/lib/utils";
-import { Plus, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { CharacterTags } from "./character-tags";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
+import { CharacterRelationshipEditor } from "./character-relationship-editor";
+
+const characterSchema = z.object({
+  name: z.string().min(1, "角色名称不能为空"),
+  role: z.enum(["protagonist", "antagonist", "supporting"]),
+  description: z.string().min(1, "角色描述不能为空"),
+  background: z.string(),
+  attributes: z.object({
+    age: z.string().optional(),
+    gender: z.string().optional(),
+    occupation: z.string().optional(),
+    birthplace: z.string().optional(),
+  }),
+  tags: z.array(z.string()),
+  personality: z.object({
+    extraversion: z.number().min(0).max(10).optional(),
+    openness: z.number().min(0).max(10).optional(),
+    conscientiousness: z.number().min(0).max(10).optional(),
+    agreeableness: z.number().min(0).max(10).optional(),
+    neuroticism: z.number().min(0).max(10).optional(),
+    analysis: z.string().optional(),
+  }).optional(),
+  relationships: z.array(z.object({
+    targetId: z.string(),
+    type: z.enum(["friend", "enemy", "family", "lover", "other"]),
+    description: z.string(),
+    strength: z.number().min(1).max(5),
+    bidirectional: z.boolean(),
+  })),
+});
 
 interface CharacterEditorProps {
-  character?: Character | null;
+  character?: Character;
   characters: Character[];
-  onSave: (character: Character) => void;
+  onSave: (character: Partial<Character>) => void;
   onCancel: () => void;
 }
 
+type FieldType<T = any> = {
+  field: {
+    value: T;
+    onChange: (value: T) => void;
+    [key: string]: any;
+  };
+};
+
+const personalityDescriptions = {
+  extraversion: {
+    low: "内向、安静、独处",
+    high: "外向、活跃、社交"
+  },
+  openness: {
+    low: "传统、实际、保守",
+    high: "创新、好奇、开放"
+  },
+  conscientiousness: {
+    low: "随性、灵活、自由",
+    high: "负责、有序、谨慎"
+  },
+  agreeableness: {
+    low: "独立、直接、竞争",
+    high: "友善、合作、同理"
+  },
+  neuroticism: {
+    low: "情绪波动、敏感",
+    high: "情绪稳定、冷静"
+  }
+};
+
 export function CharacterEditor({ character, characters, onSave, onCancel }: CharacterEditorProps) {
-  const [form, setForm] = useState<Character>({
-    id: character?.id || generateUUID(),
-    storyId: character?.storyId || "",
-    name: character?.name || "",
-    role: character?.role || "supporting",
-    description: character?.description || "",
-    background: character?.background || "",
-    relationships: character?.relationships || [],
-    createdAt: character?.createdAt || Date.now(),
-    updatedAt: Date.now(),
-    tags: character?.tags || [],
-    attributes: character?.attributes || {},
+  const [activeTab, setActiveTab] = useState("basic");
+  
+  const form = useForm<z.infer<typeof characterSchema>>({
+    resolver: zodResolver(characterSchema),
+    defaultValues: {
+      name: character?.name || "",
+      role: character?.role || "supporting",
+      description: character?.description || "",
+      background: character?.background || "",
+      attributes: {
+        age: character?.attributes.age || "",
+        gender: character?.attributes.gender || "",
+        occupation: character?.attributes.occupation || "",
+        birthplace: character?.attributes.birthplace || "",
+      },
+      tags: character?.tags || [],
+      personality: character?.personality || {
+        extraversion: 5,
+        openness: 5,
+        conscientiousness: 5,
+        agreeableness: 5,
+        neuroticism: 5,
+      },
+      relationships: character?.relationships || [],
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(form);
+  const onSubmit = (values: z.infer<typeof characterSchema>) => {
+    onSave(values);
   };
-
-  const addRelationship = () => {
-    setForm(prev => ({
-      ...prev,
-      relationships: [
-        ...prev.relationships,
-        {
-          targetId: "",
-          type: "other",
-          description: "",
-          strength: 3,
-          bidirectional: true,
-        },
-      ],
-    }));
-  };
-
-  const removeRelationship = (index: number) => {
-    setForm(prev => ({
-      ...prev,
-      relationships: prev.relationships.filter((_, i) => i !== index),
-    }));
-  };
-
-  const updateRelationship = (index: number, updates: Partial<CharacterRelationship>) => {
-    setForm(prev => ({
-      ...prev,
-      relationships: prev.relationships.map((rel, i) =>
-        i === index ? { ...rel, ...updates } : rel
-      ),
-    }));
-  };
-
-  // 常用标签建议
-  const tagSuggestions = [
-    "重要", "神秘", "聪明", "勇敢", "善良",
-    "邪恶", "复杂", "忠诚", "叛徒", "领袖"
-  ];
-
-  const renderRelationshipCard = (relationship: CharacterRelationship, index: number) => (
-    <Card key={index} className="p-4">
-      <div className="flex items-start justify-between mb-4">
-        <h4 className="text-sm font-medium">关系 #{index + 1}</h4>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => removeRelationship(index)}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">关联角色</label>
-            <Select
-              value={relationship.targetId}
-              onValueChange={value => updateRelationship(index, { targetId: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="选择关联角色" />
-              </SelectTrigger>
-              <SelectContent>
-                {characters
-                  .filter(c => c.id !== form.id)
-                  .map(c => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">关系类型</label>
-            <Select
-              value={relationship.type}
-              onValueChange={value => updateRelationship(index, { type: value as CharacterRelationship['type'] })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="选择关系类型" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="friend">朋友</SelectItem>
-                <SelectItem value="enemy">敌人</SelectItem>
-                <SelectItem value="family">家人</SelectItem>
-                <SelectItem value="lover">恋人</SelectItem>
-                <SelectItem value="other">其他</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">关系强度</label>
-          <div className="flex items-center gap-2">
-            <input
-              type="range"
-              min="1"
-              max="5"
-              value={relationship.strength}
-              onChange={e => updateRelationship(index, { strength: parseInt(e.target.value) })}
-              className="flex-1"
-            />
-            <span className="text-sm text-muted-foreground w-8 text-center">
-              {relationship.strength}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id={`bidirectional-${index}`}
-            checked={relationship.bidirectional}
-            onChange={e => updateRelationship(index, { bidirectional: e.target.checked })}
-          />
-          <label htmlFor={`bidirectional-${index}`} className="text-sm font-medium">
-            双向关系
-          </label>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">关系描述</label>
-          <Textarea
-            value={relationship.description}
-            onChange={e => updateRelationship(index, { description: e.target.value })}
-            placeholder="描述两个角色之间的关系"
-            rows={2}
-          />
-        </div>
-      </div>
-    </Card>
-  );
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">
-            {character ? "编辑角色" : "创建角色"}
-          </h2>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onCancel}>
-              取消
-            </Button>
-            <Button type="submit">保存</Button>
+    <Card className="p-6">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">
+              {character ? "编辑角色" : "创建角色"}
+            </h2>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onCancel}>
+                取消
+              </Button>
+              <Button type="submit">保存</Button>
+            </div>
           </div>
-        </div>
 
-        <ScrollArea className="h-[calc(100vh-300px)]">
-          <div className="space-y-6">
-            {/* 基本信息 */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">角色名称</label>
-                <Input
-                  value={form.name}
-                  onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="输入角色名称"
-                  required
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsTrigger value="basic">基本信息</TabsTrigger>
+              <TabsTrigger value="attributes">角色属性</TabsTrigger>
+              <TabsTrigger value="background">背景故事</TabsTrigger>
+              <TabsTrigger value="personality">性格特征</TabsTrigger>
+              <TabsTrigger value="relationships">角色关系</TabsTrigger>
+            </TabsList>
+
+            <ScrollArea className="h-[calc(100vh-300px)]">
+              <TabsContent value="basic" className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }: FieldType<string>) => (
+                    <FormItem>
+                      <FormLabel>角色名称</FormLabel>
+                      <FormControl>
+                        <Input placeholder="输入角色名称" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">角色定位</label>
-                <Select
-                  value={form.role}
-                  onValueChange={value => setForm(prev => ({ ...prev, role: value as Character['role'] }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择角色定位" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="protagonist">主角</SelectItem>
-                    <SelectItem value="antagonist">反派</SelectItem>
-                    <SelectItem value="supporting">配角</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">角色描述</label>
-              <Textarea
-                value={form.description}
-                onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="描述角色的外貌、性格等特征"
-                rows={3}
-              />
-            </div>
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }: FieldType<"protagonist" | "antagonist" | "supporting">) => (
+                    <FormItem>
+                      <FormLabel>角色定位</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="选择角色定位" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="protagonist">主角</SelectItem>
+                          <SelectItem value="antagonist">反派</SelectItem>
+                          <SelectItem value="supporting">配角</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">背景故事</label>
-              <Textarea
-                value={form.background}
-                onChange={e => setForm(prev => ({ ...prev, background: e.target.value }))}
-                placeholder="描述角色的成长经历、重要事件等"
-                rows={6}
-              />
-            </div>
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }: FieldType<string>) => (
+                    <FormItem>
+                      <FormLabel>角色描述</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="简要描述角色的特点和形象"
+                          className="min-h-[100px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* 角色关系 */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">角色关系</label>
-                <Button type="button" variant="outline" size="sm" onClick={addRelationship}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  添加关系
-                </Button>
-              </div>
-              <div className="space-y-4">
-                {form.relationships.map((relationship, index) => 
-                  renderRelationshipCard(relationship, index)
-                )}
-              </div>
-            </div>
+                <FormField
+                  control={form.control}
+                  name="tags"
+                  render={({ field }: FieldType<string[]>) => (
+                    <FormItem>
+                      <FormLabel>角色标签</FormLabel>
+                      <FormControl>
+                        <CharacterTags
+                          tags={field.value}
+                          onChange={field.onChange}
+                          suggestions={[
+                            "勇敢", "聪明", "正义", "邪恶", "神秘",
+                            "幽默", "忠诚", "叛逆", "温柔", "冷酷"
+                          ]}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </TabsContent>
 
-            {/* 角色标签 */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">角色标签</label>
-              <CharacterTags
-                tags={form.tags}
-                onChange={tags => setForm(prev => ({ ...prev, tags }))}
-                suggestions={tagSuggestions}
-              />
-            </div>
+              <TabsContent value="attributes" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="attributes.age"
+                    render={({ field }: FieldType<string>) => (
+                      <FormItem>
+                        <FormLabel>年龄</FormLabel>
+                        <FormControl>
+                          <Input placeholder="输入年龄" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            {/* 角色属性 */}
-            <div className="space-y-4">
-              <label className="text-sm font-medium">角色属性</label>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">年龄</label>
-                  <Input
-                    value={form.attributes.age || ""}
-                    onChange={e => setForm(prev => ({
-                      ...prev,
-                      attributes: { ...prev.attributes, age: e.target.value }
-                    }))}
-                    placeholder="输入年龄"
+                  <FormField
+                    control={form.control}
+                    name="attributes.gender"
+                    render={({ field }: FieldType<string>) => (
+                      <FormItem>
+                        <FormLabel>性别</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="选择性别" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="male">男</SelectItem>
+                            <SelectItem value="female">女</SelectItem>
+                            <SelectItem value="other">其他</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="attributes.occupation"
+                    render={({ field }: FieldType<string>) => (
+                      <FormItem>
+                        <FormLabel>职业</FormLabel>
+                        <FormControl>
+                          <Input placeholder="输入职业" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="attributes.birthplace"
+                    render={({ field }: FieldType<string>) => (
+                      <FormItem>
+                        <FormLabel>出生地</FormLabel>
+                        <FormControl>
+                          <Input placeholder="输入出生地" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">性别</label>
-                  <Select
-                    value={form.attributes.gender || ""}
-                    onValueChange={value => setForm(prev => ({
-                      ...prev,
-                      attributes: { ...prev.attributes, gender: value }
-                    }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择性别" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">男</SelectItem>
-                      <SelectItem value="female">女</SelectItem>
-                      <SelectItem value="other">其他</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">职业</label>
-                  <Input
-                    value={form.attributes.occupation || ""}
-                    onChange={e => setForm(prev => ({
-                      ...prev,
-                      attributes: { ...prev.attributes, occupation: e.target.value }
-                    }))}
-                    placeholder="输入职业"
+              </TabsContent>
+
+              <TabsContent value="background" className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="background"
+                  render={({ field }: FieldType<string>) => (
+                    <FormItem>
+                      <FormLabel>背景故事</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="描述角色的成长经历、重要事件等"
+                          className="min-h-[300px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </TabsContent>
+
+              <TabsContent value="personality" className="space-y-6">
+                {/* 性格特征滑块 */}
+                {Object.entries({
+                  extraversion: "外向性",
+                  openness: "开放性",
+                  conscientiousness: "尽责性",
+                  agreeableness: "亲和性",
+                  neuroticism: "情绪稳定性"
+                }).map(([key, label]) => (
+                  <FormField
+                    key={key}
+                    control={form.control}
+                    name={`personality.${key}`}
+                    render={({ field }: FieldType<number>) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between mb-2">
+                          <FormLabel>{label}</FormLabel>
+                          <span className="text-sm text-muted-foreground">
+                            {field.value}
+                          </span>
+                        </div>
+                        <FormControl>
+                          <Slider
+                            min={0}
+                            max={10}
+                            step={1}
+                            value={[field.value]}
+                            onValueChange={([value]) => field.onChange(value)}
+                            className="w-full"
+                          />
+                        </FormControl>
+                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                          <span>{personalityDescriptions[key as keyof typeof personalityDescriptions].low}</span>
+                          <span>{personalityDescriptions[key as keyof typeof personalityDescriptions].high}</span>
+                        </div>
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">出生地</label>
-                  <Input
-                    value={form.attributes.birthplace || ""}
-                    onChange={e => setForm(prev => ({
-                      ...prev,
-                      attributes: { ...prev.attributes, birthplace: e.target.value }
-                    }))}
-                    placeholder="输入出生地"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </ScrollArea>
-      </Card>
-    </form>
+                ))}
+
+                {/* 性格分析文本框 */}
+                <FormField
+                  control={form.control}
+                  name="personality.analysis"
+                  render={({ field }: FieldType<string>) => (
+                    <FormItem>
+                      <FormLabel>性格分析</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="分析角色的性格特点和行为模式"
+                          className="min-h-[150px] resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </TabsContent>
+
+              <TabsContent value="relationships">
+                <CharacterRelationshipEditor
+                  character={character || {
+                    id: "",
+                    storyId: "",
+                    name: "",
+                    role: "supporting",
+                    description: "",
+                    background: "",
+                    tags: [],
+                    attributes: {},
+                    relationships: [],
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                  }}
+                  characters={characters}
+                  onSave={(relationships) => {
+                    form.setValue("relationships", relationships);
+                  }}
+                />
+              </TabsContent>
+            </ScrollArea>
+          </Tabs>
+        </form>
+      </Form>
+    </Card>
   );
 } 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import dynamic from 'next/dynamic';
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import {
@@ -10,13 +11,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
-import { ForceGraph2D } from "react-force-graph";
+import type { ForceGraph2D } from "react-force-graph";
 
 interface CharacterNetworkExportProps {
   graphRef: React.RefObject<ForceGraph2D>;
 }
 
-export function CharacterNetworkExport({ graphRef }: CharacterNetworkExportProps) {
+export const CharacterNetworkExport = ({ graphRef }: CharacterNetworkExportProps) => {
   const handleExport = async (format: 'png' | 'svg' | 'json') => {
     if (!graphRef.current) return;
 
@@ -99,4 +100,6 @@ export function CharacterNetworkExport({ graphRef }: CharacterNetworkExportProps
       </DropdownMenuContent>
     </DropdownMenu>
   );
-} 
+};
+
+export default CharacterNetworkExport; 

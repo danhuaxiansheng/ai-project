@@ -43,7 +43,11 @@
     "react-beautiful-dnd": "^13.1.1",
     "@types/react-beautiful-dnd": "^13.1.8",
     "d3-force": "^3.0.0",
-    "@radix-ui/react-tooltip": "^1.0.7"
+    "@radix-ui/react-tooltip": "^1.0.7",
+    "@hookform/resolvers": "^3.3.4",
+    "react-hook-form": "^7.50.0",
+    "zod": "^3.22.4",
+    "@radix-ui/react-slider": "^1.1.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.16",

@@ -29,10 +29,11 @@ interface LinkData {
   bidirectional: boolean;
 }
 
-export function CharacterNetwork({ characters, onNodeClick }: CharacterNetworkProps) {
+export const CharacterNetwork = ({ characters, onNodeClick }: CharacterNetworkProps) => {
   const graphRef = useRef<ForceGraph2D<NodeData, LinkData>>(null);
   const [hoveredNode, setHoveredNode] = useState<NodeObject<NodeData> | null>(null);
   const [hoveredLink, setHoveredLink] = useState<LinkObject<LinkData> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const graphData = {
     nodes: characters.map(c => ({
@@ -59,6 +60,7 @@ export function CharacterNetwork({ characters, onNodeClick }: CharacterNetworkPr
       );
       graphRef.current.d3Force('charge').strength(-100);
     }
+    setIsLoading(false);
   }, [characters]);
 
   const handleNodeLabel = (node: NodeObject<NodeData>): string => `${node.name}`;
@@ -81,6 +83,16 @@ export function CharacterNetwork({ characters, onNodeClick }: CharacterNetworkPr
   const handleNodeClick = (node: NodeObject<NodeData>) => {
     onNodeClick?.(node.id);
   };
+
+  if (isLoading) {
+    return (
+      <Card className="p-4">
+        <div className="h-[400px] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-4">
@@ -164,4 +176,6 @@ export function CharacterNetwork({ characters, onNodeClick }: CharacterNetworkPr
       </TooltipProvider>
     </Card>
   );
-} 
+}
+
+export default CharacterNetwork; 

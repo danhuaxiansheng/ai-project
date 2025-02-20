@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from 'next/dynamic';
 import { Character } from "@/types/character";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,12 @@ import { CharacterAttributes } from "./character-attributes";
 import { Badge } from "@/components/ui/badge";
 import { CharacterRelationshipAnalysis } from "./character-relationship-analysis";
 import { CharacterAnalysis } from "./character-analysis";
-import { CharacterNetwork } from "./character-network";
+
+// 动态导入 CharacterNetwork 组件，禁用 SSR
+const CharacterNetwork = dynamic(
+  () => import('./character-network').then(mod => mod.CharacterNetwork),
+  { ssr: false }
+);
 
 interface CharacterDetailProps {
   character: Character;
