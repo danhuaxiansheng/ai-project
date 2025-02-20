@@ -31,7 +31,12 @@ import { Slider } from "@/components/ui/slider";
 import { CharacterRelationshipEditor } from "./character-relationship-editor";
 
 const characterSchema = z.object({
-  name: z.string().min(1, "角色名称不能为空"),
+  name: z.string()
+    .min(1, "角色名称不能为空")
+    .max(50, "角色名称不能超过50个字符")
+    .refine(name => /^[\u4e00-\u9fa5a-zA-Z0-9\s]+$/.test(name), {
+      message: "角色名称只能包含中文、英文、数字和空格"
+    }),
   role: z.enum(["protagonist", "antagonist", "supporting"]),
   description: z.string().min(1, "角色描述不能为空"),
   background: z.string(),
@@ -126,6 +131,20 @@ export function CharacterEditor({ character, characters, onSave, onCancel }: Cha
   });
 
   const onSubmit = (values: z.infer<typeof characterSchema>) => {
+    // 检查角色名称是否重复
+    const isDuplicateName = characters.some(c => 
+      c.name.toLowerCase() === values.name.toLowerCase() && 
+      c.id !== character?.id // 编辑时排除当前角色
+    );
+
+    if (isDuplicateName) {
+      form.setError("name", {
+        type: "manual",
+        message: "角色名称已存在，请使用其他名称"
+      });
+      return;
+    }
+
     onSave(values);
   };
 

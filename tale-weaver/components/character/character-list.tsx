@@ -5,7 +5,7 @@ import { Character } from "@/types/character";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { UserPlus, Users, Search, Filter } from "lucide-react";
+import { UserPlus, Users, Search, Filter, Plus } from "lucide-react";
 import { CharacterEditor } from "./character-editor";
 import { CharacterCard } from "./character-card";
 import { Input } from "@/components/ui/input";
@@ -17,12 +17,15 @@ import { CharacterStats } from "./character-stats";
 interface CharacterListProps {
   storyId: string;
   characters: Character[];
-  onUpdate: (characters: Character[]) => void;
+  onUpdate: (character: Character) => void;
+  onCreate: (character: Character) => void;
+  onDelete: (characterId: string) => void;
 }
 
-export function CharacterList({ storyId, characters, onUpdate }: CharacterListProps) {
+export function CharacterList({ storyId, characters, onUpdate, onCreate, onDelete }: CharacterListProps) {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [editingCharacter, setEditingCharacter] = useState<Character | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<Character['role'] | 'all'>('all');
   const [isViewing, setIsViewing] = useState(false);
@@ -40,6 +43,53 @@ export function CharacterList({ storyId, characters, onUpdate }: CharacterListPr
     supporting: filteredCharacters.filter(c => c.role === 'supporting'),
   };
 
+  const handleEdit = (character: Character) => {
+    setEditingCharacter(character);
+    setSelectedCharacter(null);
+  };
+
+  const handleSave = (updatedCharacter: Partial<Character>) => {
+    // 检查角色名称是否重复
+    const isDuplicateName = characters.some(c => 
+      c.name.toLowerCase() === updatedCharacter.name?.toLowerCase() && 
+      c.id !== editingCharacter?.id // 编辑时排除当前角色
+    );
+
+    if (isDuplicateName) {
+      toast({
+        title: "错误",
+        description: "角色名称已存在，请使用其他名称",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (editingCharacter) {
+      // 更新现有角色
+      onUpdate({
+        ...editingCharacter,
+        ...updatedCharacter,
+        updatedAt: Date.now(),
+      });
+    } else {
+      // 创建新角色
+      onCreate({
+        ...updatedCharacter,
+        id: crypto.randomUUID(),
+        storyId: storyId,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      } as Character);
+    }
+    
+    setEditingCharacter(null);
+    setIsCreating(false);
+    toast({
+      title: "成功",
+      description: editingCharacter ? "角色信息已更新" : "角色已创建",
+    });
+  };
+
   const handleDelete = async (character: Character) => {
     try {
       const updatedCharacters = characters.filter(c => c.id !== character.id);
@@ -48,8 +98,10 @@ export function CharacterList({ storyId, characters, onUpdate }: CharacterListPr
       // 如果删除的是当前选中的角色，清除选中状态
       if (selectedCharacter?.id === character.id) {
         setSelectedCharacter(null);
-        setIsEditing(false);
+        setEditingCharacter(null);
       }
+      
+      await onDelete(character.id);
       
       toast({
         title: "成功",
@@ -64,154 +116,106 @@ export function CharacterList({ storyId, characters, onUpdate }: CharacterListPr
     }
   };
 
+  const handleCreateClick = () => {
+    // 清除选中和编辑状态
+    setSelectedCharacter(null);
+    setEditingCharacter(null);
+    setIsCreating(true);
+  };
+
   return (
-    <div className="space-y-6">
-      {/* 添加角色统计 */}
-      <CharacterStats characters={characters} />
-
-      {/* 顶部操作栏 */}
-      <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between p-4">
+        <h2 className="text-2xl font-bold">角色列表</h2>
         <div className="flex items-center gap-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            角色列表
-          </h2>
-          <div className="text-sm text-muted-foreground">
-            共 {characters.length} 个角色
-          </div>
-        </div>
-        <Button onClick={() => {
-          setSelectedCharacter(null);
-          setIsEditing(true);
-        }}>
-          <UserPlus className="h-4 w-4 mr-2" />
-          添加角色
-        </Button>
-      </div>
-
-      {/* 搜索和筛选 */}
-      <div className="flex gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="搜索角色..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <Select value={roleFilter} onValueChange={(value: any) => setRoleFilter(value)}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="角色定位" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">全部角色</SelectItem>
-            <SelectItem value="protagonist">主角</SelectItem>
-            <SelectItem value="antagonist">反派</SelectItem>
-            <SelectItem value="supporting">配角</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* 主要内容区 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* 角色列表 */}
-        <div className="space-y-6">
-          {Object.entries(charactersByRole).map(([role, chars]) => chars.length > 0 && (
-            <div key={role} className="space-y-2">
-              <h3 className="text-sm font-medium text-muted-foreground">
-                {{
-                  protagonist: '主角',
-                  antagonist: '反派',
-                  supporting: '配角'
-                }[role as keyof typeof charactersByRole]}
-              </h3>
-              <div className="space-y-2">
-                {chars.map(character => (
-                  <CharacterCard
-                    key={character.id}
-                    character={character}
-                    isSelected={selectedCharacter?.id === character.id}
-                    onClick={() => {
-                      setSelectedCharacter(character);
-                      setIsEditing(true);
-                    }}
-                    onEdit={() => {
-                      setSelectedCharacter(character);
-                      setIsEditing(true);
-                    }}
-                    onDelete={() => handleDelete(character)}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-          {filteredCharacters.length === 0 && (
-            <Card className="p-8 flex flex-col items-center justify-center text-center">
-              <Users className="h-8 w-8 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">还没有添加任何角色</p>
-              <Button 
-                variant="link" 
-                onClick={() => {
-                  setSelectedCharacter(null);
-                  setIsEditing(true);
-                }}
-              >
-                立即添加
-              </Button>
-            </Card>
-          )}
-        </div>
-
-        {/* 编辑/查看区域 */}
-        <div className="md:col-span-2">
-          {isEditing ? (
-            <CharacterEditor
-              character={selectedCharacter}
-              characters={characters}
-              onSave={async (character) => {
-                try {
-                  const updatedCharacters = selectedCharacter
-                    ? characters.map(c => c.id === character.id ? character : c)
-                    : [...characters, character];
-                  await onUpdate(updatedCharacters);
-                  setIsEditing(false);
-                  setIsViewing(true);
-                  toast({
-                    title: "成功",
-                    description: "角色信息已保存",
-                  });
-                } catch (error) {
-                  toast({
-                    title: "错误",
-                    description: "保存角色信息失败",
-                    variant: "destructive",
-                  });
-                }
-              }}
-              onCancel={() => {
-                setIsEditing(false);
-                setSelectedCharacter(null);
-              }}
+          <div className="flex gap-2">
+            <Input
+              placeholder="搜索角色..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-[200px]"
             />
-          ) : isViewing && selectedCharacter ? (
+            <Select 
+              value={roleFilter} 
+              onValueChange={(value: typeof roleFilter) => setRoleFilter(value)}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="角色类型" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部</SelectItem>
+                <SelectItem value="protagonist">主角</SelectItem>
+                <SelectItem value="antagonist">反派</SelectItem>
+                <SelectItem value="supporting">配角</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button 
+            onClick={handleCreateClick}
+            variant="default"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            创建角色
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex-1 flex gap-4 p-4 min-h-0">
+        <div className="w-1/3 min-w-[300px]">
+          <ScrollArea className="h-[calc(100vh-200px)]">
+            <div className="space-y-4 pr-4">
+              {Object.entries(charactersByRole).map(([role, chars]) => (
+                <div key={role} className="space-y-2">
+                  {chars.length > 0 && (
+                    <>
+                      <h3 className="font-medium text-sm text-muted-foreground">
+                        {{
+                          protagonist: '主角',
+                          antagonist: '反派',
+                          supporting: '配角'
+                        }[role as keyof typeof charactersByRole]}
+                        <span className="ml-2 text-xs">({chars.length})</span>
+                      </h3>
+                      {chars.map((character) => (
+                        <CharacterCard
+                          key={character.id}
+                          character={character}
+                          isSelected={selectedCharacter?.id === character.id}
+                          onClick={() => {
+                            setSelectedCharacter(character);
+                            setEditingCharacter(null);
+                          }}
+                          onEdit={() => handleEdit(character)}
+                          onDelete={() => handleDelete(character)}
+                        />
+                      ))}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+
+        <div className="flex-1">
+          {selectedCharacter && !isCreating && !editingCharacter && (
             <CharacterDetail
               character={selectedCharacter}
               characters={characters.filter(c => c.id !== selectedCharacter.id)}
-              onEdit={() => {
-                setIsViewing(false);
-                setIsEditing(true);
-              }}
-              onClose={() => {
-                setIsViewing(false);
-                setSelectedCharacter(null);
+              onEdit={() => handleEdit(selectedCharacter)}
+              onClose={() => setSelectedCharacter(null)}
+            />
+          )}
+          {(editingCharacter || isCreating) && (
+            <CharacterEditor
+              character={editingCharacter || undefined}
+              characters={characters.filter(c => c.id !== editingCharacter?.id)}
+              onSave={handleSave}
+              onCancel={() => {
+                setEditingCharacter(null);
+                setIsCreating(false);
               }}
             />
-          ) : (
-            <Card className="p-8 flex flex-col items-center justify-center text-center h-full">
-              <Users className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">选择左侧角色进行查看或编辑，或创建新角色</p>
-            </Card>
           )}
         </div>
       </div>

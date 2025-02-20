@@ -159,19 +159,23 @@ export default function StoryDetailPage() {
     }
   };
 
-  const handleCharactersUpdate = async (characters: Character[]) => {
+  const handleCharactersUpdate = async (updatedCharacter: Character) => {
     if (!currentStory) return;
-    
-    try {
-      // 确保所有角色都有必要的字段
-      const updatedCharacters = characters.map(character => ({
-        ...character,
-        storyId: currentStory.id,
-        createdAt: character.createdAt || Date.now(),
-        updatedAt: Date.now(),
-      }));
 
-      await updateStory(currentStory.id, {
+    try {
+      const updatedCharacters = currentStory.settings?.characters.map(c => 
+        c.id === updatedCharacter.id ? updatedCharacter : c
+      ) || [];
+
+      await db.updateStory(currentStory.id, {
+        settings: {
+          ...currentStory.settings,
+          characters: updatedCharacters,
+        },
+      });
+
+      setCurrentStory({
+        ...currentStory,
         settings: {
           ...currentStory.settings,
           characters: updatedCharacters,
@@ -183,10 +187,82 @@ export default function StoryDetailPage() {
         description: "角色信息已更新",
       });
     } catch (error) {
-      console.error('Failed to update characters:', error);
       toast({
         title: "错误",
         description: "更新角色信息失败",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCharacterCreate = async (character: Character) => {
+    if (!currentStory) return;
+
+    try {
+      const updatedCharacters = [
+        ...(currentStory.settings?.characters || []),
+        character,
+      ];
+
+      await db.updateStory(currentStory.id, {
+        settings: {
+          ...currentStory.settings,
+          characters: updatedCharacters,
+        },
+      });
+
+      setCurrentStory({
+        ...currentStory,
+        settings: {
+          ...currentStory.settings,
+          characters: updatedCharacters,
+        },
+      });
+
+      toast({
+        title: "成功",
+        description: "角色已创建",
+      });
+    } catch (error) {
+      toast({
+        title: "错误",
+        description: "创建角色失败",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCharacterDelete = async (characterId: string) => {
+    if (!currentStory) return;
+
+    try {
+      const updatedCharacters = currentStory.settings?.characters.filter(
+        c => c.id !== characterId
+      ) || [];
+
+      await db.updateStory(currentStory.id, {
+        settings: {
+          ...currentStory.settings,
+          characters: updatedCharacters,
+        },
+      });
+
+      setCurrentStory({
+        ...currentStory,
+        settings: {
+          ...currentStory.settings,
+          characters: updatedCharacters,
+        },
+      });
+
+      toast({
+        title: "成功",
+        description: "角色已删除",
+      });
+    } catch (error) {
+      toast({
+        title: "错误",
+        description: "删除角色失败",
         variant: "destructive",
       });
     }
@@ -267,6 +343,8 @@ export default function StoryDetailPage() {
             storyId={currentStory.id}
             characters={currentStory.settings?.characters || []}
             onUpdate={handleCharactersUpdate}
+            onCreate={handleCharacterCreate}
+            onDelete={handleCharacterDelete}
           />
         </TabsContent>
 
