@@ -2,10 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Character } from "@/types/character";
-import ForceGraph2D, { NodeObject, LinkObject } from "react-force-graph-2d";
+import { ForceGraph2D } from "react-force-graph";
 import { Card } from "@/components/ui/card";
 import { CharacterNetworkExport } from "./character-network-export";
-import { Tooltip } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CharacterNetworkProps {
   characters: Character[];
@@ -81,54 +86,82 @@ export function CharacterNetwork({ characters, onNodeClick }: CharacterNetworkPr
     <Card className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">关系网络</h3>
-        <CharacterNetworkExport graphRef={graphRef} />
+        <div className="flex items-center gap-2">
+          <CharacterNetworkExport graphRef={graphRef} />
+        </div>
       </div>
-      <div className="relative h-[400px] w-full">
-        <ForceGraph2D
-          ref={graphRef}
-          graphData={graphData}
-          nodeLabel={handleNodeLabel}
-          nodeColor={handleNodeColor}
-          linkColor={handleLinkColor}
-          linkWidth={handleLinkWidth}
-          onNodeClick={handleNodeClick}
-          onNodeHover={setHoveredNode}
-          onLinkHover={setHoveredLink}
-          cooldownTicks={100}
-          nodeRelSize={6}
-          linkDirectionalParticles={2}
-          linkDirectionalParticleSpeed={0.005}
-          linkDirectionalParticleWidth={2}
-          backgroundColor="transparent"
-        />
-        {hoveredNode && (
-          <Tooltip>
-            <div className="p-2">
-              <div className="font-medium">{hoveredNode.name}</div>
-              <div className="text-sm text-muted-foreground">
-                {hoveredNode.role === 'protagonist' ? '主角' :
-                 hoveredNode.role === 'antagonist' ? '反派' : '配角'}
-              </div>
-            </div>
-          </Tooltip>
-        )}
-        {hoveredLink && (
-          <Tooltip>
-            <div className="p-2">
-              <div className="font-medium">
-                {hoveredLink.type === 'friend' ? '朋友' :
-                 hoveredLink.type === 'enemy' ? '敌人' :
-                 hoveredLink.type === 'family' ? '家人' :
-                 hoveredLink.type === 'lover' ? '恋人' : '其他'}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                关系强度: {hoveredLink.strength}
-                {hoveredLink.bidirectional && ' (双向)'}
-              </div>
-            </div>
-          </Tooltip>
-        )}
-      </div>
+      <TooltipProvider>
+        <div className="relative h-[400px] w-full">
+          <ForceGraph2D
+            ref={graphRef}
+            graphData={graphData}
+            nodeLabel={handleNodeLabel}
+            nodeColor={handleNodeColor}
+            linkColor={handleLinkColor}
+            linkWidth={handleLinkWidth}
+            onNodeClick={handleNodeClick}
+            onNodeHover={setHoveredNode}
+            onLinkHover={setHoveredLink}
+            cooldownTicks={100}
+            nodeRelSize={6}
+            linkDirectionalParticles={2}
+            linkDirectionalParticleSpeed={0.005}
+            linkDirectionalParticleWidth={2}
+            backgroundColor="transparent"
+          />
+          {hoveredNode && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="absolute top-0 left-0" style={{
+                  transform: `translate(${hoveredNode.x}px, ${hoveredNode.y}px)`
+                }} />
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="flex flex-col gap-1">
+                  <div className="font-medium">{hoveredNode.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {hoveredNode.role === 'protagonist' ? '主角' :
+                     hoveredNode.role === 'antagonist' ? '反派' : '配角'}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    关系数: {hoveredNode.val - 1}
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {hoveredLink && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="absolute top-0 left-0" style={{
+                  transform: `translate(${
+                    ((hoveredLink.source as NodeObject).x + (hoveredLink.target as NodeObject).x) / 2
+                  }px, ${
+                    ((hoveredLink.source as NodeObject).y + (hoveredLink.target as NodeObject).y) / 2
+                  }px)`
+                }} />
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="flex flex-col gap-1">
+                  <div className="font-medium">
+                    {hoveredLink.type === 'friend' ? '朋友' :
+                     hoveredLink.type === 'enemy' ? '敌人' :
+                     hoveredLink.type === 'family' ? '家人' :
+                     hoveredLink.type === 'lover' ? '恋人' : '其他'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    关系强度: {hoveredLink.strength}
+                    {hoveredLink.bidirectional && ' (双向)'}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {(hoveredLink.source as NodeObject).name} → {(hoveredLink.target as NodeObject).name}
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      </TooltipProvider>
     </Card>
   );
 } 

@@ -1,31 +1,54 @@
 declare module "react-force-graph" {
   import { FC } from "react";
 
-  export interface NodeObject {
+  export interface NodeObject<T = any> {
     id: string;
-    [key: string]: any;
+    x?: number;
+    y?: number;
+    name?: string;
+    val?: number;
+    [key: string]: T;
   }
 
-  export interface LinkObject {
+  export interface LinkObject<T = any> {
     source: string | NodeObject;
     target: string | NodeObject;
-    [key: string]: any;
+    type?: string;
+    strength?: number;
+    [key: string]: T;
   }
 
-  export interface GraphData {
-    nodes: NodeObject[];
-    links: LinkObject[];
+  export interface GraphData<N = any, L = any> {
+    nodes: Array<NodeObject<N>>;
+    links: Array<LinkObject<L>>;
   }
 
-  export interface ForceGraphProps {
-    graphData: GraphData;
-    nodeLabel?: string | ((node: NodeObject) => string);
-    nodeColor?: string | ((node: NodeObject) => string);
-    linkColor?: string | ((link: LinkObject) => string);
-    backgroundColor?: string;
+  export interface ForceGraphProps<N = any, L = any> {
+    graphData: GraphData<N, L>;
+    nodeLabel?: string | ((node: NodeObject<N>) => string);
+    nodeColor?: string | ((node: NodeObject<N>) => string);
+    nodeVal?: number | ((node: NodeObject<N>) => number);
+    nodeRelSize?: number;
+    linkSource?: string;
+    linkTarget?: string;
+    linkColor?: string | ((link: LinkObject<L>) => string);
+    linkWidth?: number | ((link: LinkObject<L>) => number);
+    linkDirectionalParticles?: number;
+    linkDirectionalParticleSpeed?: number;
+    linkDirectionalParticleWidth?: number;
+    onNodeClick?: (node: NodeObject<N>) => void;
+    onLinkClick?: (link: LinkObject<L>) => void;
+    onNodeHover?: (node: NodeObject<N> | null) => void;
+    onLinkHover?: (link: LinkObject<L> | null) => void;
+    cooldownTicks?: number;
+    cooldownTime?: number;
+    d3AlphaDecay?: number;
+    d3VelocityDecay?: number;
+    warmupTicks?: number;
     width?: number;
     height?: number;
-    [key: string]: any;
+    backgroundColor?: string;
+    ref?: any;
   }
 
   export const ForceGraph2D: FC<ForceGraphProps>;

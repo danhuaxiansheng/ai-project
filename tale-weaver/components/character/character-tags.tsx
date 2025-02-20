@@ -14,7 +14,7 @@ import {
 interface CharacterTagsProps {
   tags: string[];
   onChange: (tags: string[]) => void;
-  suggestions?: string[];  // 标签建议
+  suggestions?: string[];
 }
 
 export function CharacterTags({ tags, onChange, suggestions = [] }: CharacterTagsProps) {
@@ -87,4 +87,4 @@ export function CharacterTags({ tags, onChange, suggestions = [] }: CharacterTag
       </div>
     </div>
   );
-} 
+}

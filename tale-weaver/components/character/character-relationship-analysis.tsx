@@ -4,7 +4,13 @@ import { Character, CharacterRelationship } from "@/types/character";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Sword, Users, Home, QuestionMark } from "lucide-react";
+import { 
+  Heart, 
+  Home, 
+  Swords,
+  Users, 
+  HelpCircle
+} from "lucide-react";
 
 interface CharacterRelationshipAnalysisProps {
   character: Character;
@@ -50,10 +56,10 @@ export function CharacterRelationshipAnalysis({ character, characters }: Charact
   const getRelationshipIcon = (type: CharacterRelationship['type']) => {
     switch (type) {
       case 'friend': return <Users className="h-4 w-4" />;
-      case 'enemy': return <Sword className="h-4 w-4" />;
+      case 'enemy': return <Swords className="h-4 w-4" />;
       case 'family': return <Home className="h-4 w-4" />;
       case 'lover': return <Heart className="h-4 w-4" />;
-      default: return <QuestionMark className="h-4 w-4" />;
+      default: return <HelpCircle className="h-4 w-4" />;
     }
   };
 
