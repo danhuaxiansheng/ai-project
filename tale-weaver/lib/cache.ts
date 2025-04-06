@@ -16,7 +16,7 @@ interface CacheData<T> {
 }
 
 export const cacheService = {
-  private isClient: boolean = typeof window !== "undefined",
+  isClient: typeof window !== "undefined",
 
   // 通用缓存方法
   async getCache<T>(key: string): Promise<T | null> {
