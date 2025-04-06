@@ -1,4 +1,6 @@
 import { Role } from "@/types/role";
+import dotenv from "dotenv";
+dotenv.config();
 
 export const AI_CONFIG = {
   model: "deepseek-chat",
@@ -14,8 +16,10 @@ export const API_ENDPOINTS = {
 };
 
 // 验证环境变量
-if (!process.env.DEEPSEEK_API_KEY) {
-  throw new Error("DEEPSEEK_API_KEY is not set in environment variables");
+if (!process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY) {
+  throw new Error(
+    "NEXT_PUBLIC_DEEPSEEK_API_KEY is not set in environment variables. Please ensure it is defined in your .env file and the server is restarted."
+  );
 }
 
 export const AI_ROLES: Record<string, Role> = {
